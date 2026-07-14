@@ -1,6 +1,30 @@
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  function mapConsent(r) {
+    function g(b) { return b ? 'granted' : 'denied'; }
+    return {
+      ad_storage: g(r && r.advertising),
+      ad_user_data: g(r && r.advertising),
+      ad_personalization: g(r && r.advertising),
+      analytics_storage: g(r && r.analytics),
+      functionality_storage: g(r && r.functional),
+      personalization_storage: g(r && r.functional),
+      security_storage: 'granted'
+    };
+  }
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('fta_cookie_consent') || 'null'); } catch (e) {}
+  var d = mapConsent(stored);
+  if (!stored) { d.wait_for_update = 500; }
+  gtag('consent', 'default', d);
+  window.addEventListener('fta:consent-updated', function (e) { gtag('consent', 'update', mapConsent(e.detail)); });
+})();
+</script>
 <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
