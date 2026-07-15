@@ -201,6 +201,8 @@ footer.bot .wrap {
 @media (max-width: 700px) {
   .card iframe { height: 860px; }
   header.top .wrap { padding-top: 14px; padding-bottom: 14px; }
+  .brand .tag { display: none; }        /* hide tagline on mobile, like the main nav */
+  .hero { padding-top: 40px; }
 }
 </style>
 </head>
@@ -234,11 +236,12 @@ footer.bot .wrap {
   <div class="curve" id="fta-curve" aria-hidden="true"></div>
 
   <div class="card">
-    <div class="loading">Loading scheduler&hellip;</div>
+    <div class="loading" id="sched-loading">Loading scheduler&hellip;</div>
     <iframe
       title="Book a call with Austin Butler"
       src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ33Jxb4EIpB31H0BrBba3TRJWky0Ae0VBKCJeAjE8ufTUJ9Ls2v5xNuUfgpWqlqltku4U3qXGOF?gv=true"
-      loading="eager"></iframe>
+      loading="eager"
+      onload="var l=document.getElementById('sched-loading'); if(l){l.style.display='none';}"></iframe>
   </div>
 
   <p class="fallback">Scheduler not loading? <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Open it in a new tab &#8594;</a></p>
