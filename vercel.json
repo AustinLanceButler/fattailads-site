@@ -1,4 +1,11 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "redirects": [
+    {
+      "source": "/meet",
+      "destination": "https://calendar.app.google/XKF91PmUWkr3qdDU7",
+      "permanent": false
+    }
+  ]
 }
