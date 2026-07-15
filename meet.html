@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Consent Mode v2 default — reads the same localStorage key the main site's banner writes -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  function mapConsent(r) {
+    function g(b) { return b ? 'granted' : 'denied'; }
+    return {
+      ad_storage: g(r && r.advertising),
+      ad_user_data: g(r && r.advertising),
+      ad_personalization: g(r && r.advertising),
+      analytics_storage: g(r && r.analytics),
+      functionality_storage: g(r && r.functional),
+      personalization_storage: g(r && r.functional),
+      security_storage: 'granted'
+    };
+  }
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('fta_cookie_consent') || 'null'); } catch (e) {}
+  var d = mapConsent(stored);
+  if (!stored) { d.wait_for_update = 500; }
+  gtag('consent', 'default', d);
+  window.addEventListener('fta:consent-updated', function (e) { gtag('consent', 'update', mapConsent(e.detail)); });
+})();
+</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KFF7DGR5');</script>
+<!-- End Google Tag Manager -->
+
+<title>Book a call — Fat Tail Ads</title>
+<meta name="description" content="Book a 30-minute paid-media working session with Austin Butler of Fat Tail Ads.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+<style>/* ============================================================
+   FAT TAIL ADS — Core tokens (mirrored from the main site)
+   ============================================================ */
+:root {
+  --paper-0:  #FBF8F3;
+  --paper-1:  #F5F1E8;
+  --paper-2:  #EAE4D6;
+  --paper-3:  #D8D0BD;
+
+  --ink-0:    #14120E;
+  --ink-1:    #2A2720;
+  --ink-2:    #5C564A;
+  --ink-3:    #8A8576;
+  --ink-4:    #B5AF9F;
+
+  --vermillion-50:  #FBEDE5;
+  --vermillion-100: #F5D4C2;
+  --vermillion-300: #E89169;
+  --vermillion-500: #C8502A;  /* brand primary */
+  --vermillion-700: #8E3516;
+  --vermillion-900: #4A1B0A;
+
+  --bg:        var(--paper-0);
+  --fg:        var(--ink-0);
+  --fg-body:   var(--ink-1);
+  --fg-muted:  var(--ink-2);
+  --fg-subtle: var(--ink-3);
+  --border:    var(--paper-3);
+  --accent:        var(--vermillion-500);
+  --accent-hover:  var(--vermillion-700);
+  --accent-soft:   var(--vermillion-50);
+
+  --font-display: "Fraunces", "Times New Roman", Georgia, serif;
+  --font-sans:    "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+
+  --t-mono-xs: 11px;
+  --t-base:    15px;
+  --t-lg:      20px;
+
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+
+  --lh-tight:  1.05;
+  --lh-snug:   1.2;
+  --lh-normal: 1.45;
+
+  --tr-tighter: -0.03em;
+  --tr-tight:   -0.01em;
+  --tr-wider:    0.12em;
+
+  --r-1: 2px;
+  --r-2: 4px;
+
+  --shadow-2: 0 2px 0 rgba(20,18,14,0.03), 0 4px 10px rgba(20,18,14,0.06);
+  --shadow-3: 0 8px 28px -12px rgba(20,18,14,0.22);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg-body);
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-normal);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+::selection { background: var(--vermillion-100); color: var(--ink-0); }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+
+/* ── Top bar ─────────────────────────────────────────── */
+header.top {
+  border-bottom: 0.5px solid var(--paper-3);
+  background: var(--paper-0);
+  position: sticky; top: 0; z-index: 10;
+}
+header.top .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-top: 18px; padding-bottom: 18px;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--ink-0); letter-spacing: -0.005em; text-transform: uppercase;
+  text-decoration: none;
+}
+.brand .tag {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-2);
+  font-weight: 500; letter-spacing: 0.14em; margin-left: 8px;
+  padding-left: 10px; border-left: 1px solid var(--paper-3);
+}
+.top-link {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+  letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+}
+.top-link:hover { color: var(--ink-0); }
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero { padding: clamp(44px, 8vw, 84px) 0 10px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: var(--t-mono-xs); font-weight: var(--w-medium);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--fg-muted);
+}
+.h1meet {
+  font-family: var(--font-display); font-weight: var(--w-medium);
+  font-size: clamp(40px, 9vw, 72px); letter-spacing: var(--tr-tighter);
+  line-height: 1.0; color: var(--ink-0); margin: 14px 0 18px;
+  font-variation-settings: "opsz" 120, "SOFT" 30;
+}
+.lede {
+  font-family: var(--font-display); font-style: italic; font-size: clamp(18px, 2.4vw, 23px);
+  line-height: var(--lh-normal); color: var(--fg-body); max-width: 46ch; margin: 0;
+  font-variation-settings: "opsz" 72;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.chip {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+  padding: 4px 9px; border-radius: var(--r-1); background: var(--paper-2); color: var(--ink-1);
+}
+.chip.tail { background: var(--vermillion-50); color: var(--vermillion-700); border: 1px solid var(--vermillion-100); }
+
+/* ── Curve divider ───────────────────────────────────── */
+.curve { margin: 30px 0 22px; }
+
+/* ── Scheduler card ──────────────────────────────────── */
+.card {
+  background: #fff; border: 1px solid var(--paper-3); border-radius: var(--r-2);
+  box-shadow: var(--shadow-2); overflow: hidden; position: relative;
+}
+.card .loading {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-3); pointer-events: none;
+}
+.card iframe { display: block; width: 100%; height: 760px; border: 0; position: relative; }
+
+.fallback { font-family: var(--font-mono); font-size: 12px; color: var(--ink-2); margin: 16px 2px 72px; }
+.fallback a { color: var(--vermillion-700); border-bottom: 1px solid var(--vermillion-100); text-decoration: none; }
+.fallback a:hover { border-bottom-color: var(--vermillion-500); }
+
+/* ── Footer ──────────────────────────────────────────── */
+footer.bot { border-top: 0.5px solid var(--paper-3); }
+footer.bot .wrap {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-top: 22px; padding-bottom: 40px;
+}
+.foot-brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans);
+  font-weight: 600; font-size: 12px; color: var(--ink-1); text-transform: uppercase; letter-spacing: -0.005em; }
+.muted { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+
+@media (max-width: 700px) {
+  .card iframe { height: 860px; }
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; }
+}
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KFF7DGR5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://fattailads.com/" aria-label="Fat Tail Ads home">
+      <span id="fta-monogram"></span>
+      Fat&nbsp;Tail&nbsp;Ads
+      <span class="tag">Performance&nbsp;Media&nbsp;Consultancy</span>
+    </a>
+    <a class="top-link" href="https://fattailads.com/">fattailads.com&nbsp;&#8599;</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Scheduling</span>
+    <h1 class="h1meet">Let&rsquo;s talk.</h1>
+    <p class="lede">Thirty focused minutes on your paid media &mdash; where spend is leaking, and where the asymmetric wins are hiding. Grab whatever time works below.</p>
+    <div class="chips">
+      <span class="chip">30 Minutes</span>
+      <span class="chip">Google Meet</span>
+      <span class="chip tail">Instant Confirmation</span>
+    </div>
+  </section>
+
+  <div class="curve" id="fta-curve" aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="loading">Loading scheduler&hellip;</div>
+    <iframe
+      title="Book a call with Austin Butler"
+      src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ33Jxb4EIpB31H0BrBba3TRJWky0Ae0VBKCJeAjE8ufTUJ9Ls2v5xNuUfgpWqlqltku4U3qXGOF?gv=true"
+      loading="eager"></iframe>
+  </div>
+
+  <p class="fallback">Scheduler not loading? <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Open it in a new tab &#8594;</a></p>
+</main>
+
+<footer class="bot">
+  <div class="wrap">
+    <span class="foot-brand"><span id="fta-footer-monogram"></span>Fat&nbsp;Tail&nbsp;Ads</span>
+    <span class="muted">&copy; 2026 &middot; Performance Media Consultancy</span>
+  </div>
+</footer>
+
+<script>
+// Fat-tail logomark + curve — same geometry as the main site (src/1.jsx), rendered in vanilla JS.
+(function () {
+  function gaussianBodyPath(width, height, closed) {
+    var base = height - 10, peakY = 10, amp = base - peakY;
+    var bodyStart = width * 0.04, bodyEnd = width * 0.70, mu = width * 0.32, sigma = width * 0.09;
+    var step = (bodyEnd - bodyStart) / 60, pts = [];
+    for (var x = bodyStart; x <= bodyEnd + 0.001; x += step) {
+      var y = base - amp * Math.exp(-((x - mu) * (x - mu)) / (2 * sigma * sigma));
+      pts.push([x, y]);
+    }
+    var d = "M " + pts[0][0].toFixed(2) + " " + pts[0][1].toFixed(2);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      var c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += " C " + c1x.toFixed(2) + " " + c1y.toFixed(2) + ", " + c2x.toFixed(2) + " " + c2y.toFixed(2) + ", " + p2[0].toFixed(2) + " " + p2[1].toFixed(2);
+    }
+    if (closed) d += " L " + pts[pts.length - 1][0].toFixed(2) + " " + base + " L " + pts[0][0].toFixed(2) + " " + base + " Z";
+    return { d: d, tailStartX: pts[pts.length - 1][0], baseY: base };
+  }
+  function monogram(size) {
+    var W = 64, H = 58, body = gaussianBodyPath(W, H, false), fill = gaussianBodyPath(W, H, true), baseY = body.baseY;
+    var stroke = "#14120E", tail = "#C8502A", grid = "#D8D0BD";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 64 64" fill="none" style="flex:0 0 auto;display:block">'
+      + '<rect x="0.5" y="0.5" width="63" height="63" rx="2" stroke="' + stroke + '" stroke-width="1" fill="#FBF8F3"/>'
+      + '<line x1="5" y1="' + baseY + '" x2="59" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + stroke + '" fill-opacity="0.1"/>'
+      + '<path d="' + body.d + '" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + body.tailStartX.toFixed(2) + ' ' + baseY + ' C ' + (W * 0.82) + ' ' + baseY + ', ' + (W * 0.92) + ' ' + baseY + ', 59 ' + baseY + '" stroke="' + tail + '" stroke-width="2" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="59" cy="' + baseY + '" r="2" fill="' + tail + '"/></svg>';
+  }
+  function curve(width, height) {
+    var body = gaussianBodyPath(width, height, false), fill = gaussianBodyPath(width, height, true), baseY = body.baseY, tailStart = body.tailStartX;
+    var bd = "#14120E", tl = "#C8502A", grid = "#EAE4D6";
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" height="' + height + '" preserveAspectRatio="none" style="display:block">'
+      + '<line x1="0" y1="' + baseY + '" x2="' + width + '" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + bd + '" fill-opacity="0.08"/>'
+      + '<path d="' + body.d + '" stroke="' + bd + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + tailStart.toFixed(2) + ' ' + baseY + ' C ' + (width * 0.82) + ' ' + baseY + ', ' + (width * 0.92) + ' ' + baseY + ', ' + (width - 2) + ' ' + baseY + '" stroke="' + tl + '" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="' + (width - 2) + '" cy="' + baseY + '" r="2.5" fill="' + tl + '"/></svg>';
+  }
+  var m = document.getElementById('fta-monogram'); if (m) m.innerHTML = monogram(22);
+  var fm = document.getElementById('fta-footer-monogram'); if (fm) fm.innerHTML = monogram(20);
+  var c = document.getElementById('fta-curve'); if (c) c.innerHTML = curve(1160, 120);
+
+  // Measurement: mark that the booking page was viewed (build a GA4 conversion from this if useful).
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: 'book_page_view', page_type: 'scheduler' });
+}());
+</script>
+</body></html>

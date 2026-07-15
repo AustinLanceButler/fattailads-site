@@ -8,4 +8,7 @@ writeFileSync('concat.jsx', concat);
 mkdirSync('dist', { recursive: true });
 execSync('./node_modules/.bin/esbuild concat.jsx --loader:.jsx=jsx --jsx=transform --minify --target=es2018 --outfile=dist/app.js', { stdio: 'inherit' });
 copyFileSync('index.html', 'dist/index.html');
-console.log('build complete: dist/app.js + dist/index.html');
+// Standalone, unlisted booking page → served at /meet (dist/meet/index.html).
+mkdirSync('dist/meet', { recursive: true });
+copyFileSync('meet.html', 'dist/meet/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/meet/index.html');
