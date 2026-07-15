@@ -1,28 +1,32 @@
-# Fat Tail Ads site — source & build
+# Fat Tail Ads site — source &amp; build
 
-Live site = compiled `index.html` + `app.js` at repo root, auto-deployed by Vercel from `main`.
+Vercel builds this site FROM SOURCE on every push (see /vercel.json):
+    npm run build  →  node build.mjs  →  dist/app.js + dist/index.html
+The repo does NOT contain a compiled app.js. The live site serves the dist/
+output of the commit — nothing else.
 
-## Sources (this folder)
-`1.jsx` … `7.jsx` + `8_inline.jsx` — React sources in load order, extracted from the
-Claude Design export and since modified directly (see history below). These are the
-EDITABLE truth. `index.html` at repo root is hand-maintained (head/meta/GTM/consent
-bridge/styles) — edit it directly.
+## Editing rules (humans and AIs)
+- Content / components / pages: edit src/1.jsx … src/7.jsx, src/8_inline.jsx
+  (concatenated in that order at build).
+- Head, meta, GTM (GTM-KFF7DGR5), Consent Mode bridge, styles, fonts, the
+  inlined about-photo: edit /index.html — it is deployed as-is.
+- NEVER commit a compiled app.js or a raw Claude Design export bundle here.
+  Claude Design exports must be diffed against src/ and merged intentionally
+  (Design's runtime keeps babel-standalone + dev React; production must not).
+- esbuild is pinned in package.json; build flags in build.mjs are the contract
+  (--jsx=transform, --minify, --target=es2018). Change them knowingly or not at all.
 
-## Build app.js
-    cat 1.jsx 2.jsx 3.jsx 4.jsx 5.jsx 6.jsx 7.jsx 8_inline.jsx > concat.jsx  # with '\n;\n' between files
-    esbuild concat.jsx --loader:.jsx=jsx --jsx=transform --minify --target=es2018 --outfile=app.js
-React 18 UMD is loaded globally by index.html — no bundler imports.
+## Measurement wiring (do not remove casually)
+- dataLayer events in src: generate_lead (form success only), phone_call
+  (tel: links ×3), book_call_click (nav CTA), email_click (privacy mailto).
+- index.html: Consent Mode v2 bridge — default denied, reads localStorage
+  'fta_cookie_consent', listens for 'fta:consent-updated' from the banner.
+- GTM container GTM-KFF7DGR5 → GA4 G-RD78J97VX0 (property 372281364).
 
-## Changes made outside Claude Design (Design's copy does NOT have these)
-- Approach-page bio: Miami → Fort Lauderdale
-- Mobile responsive pass: useMobile() hook (1.jsx), two-row wrap nav, clamp() type
-  and padding, auto-fit grids, mobile work/article rows, table scroll wrappers
-- Conversion tracking: tel:+19542285080 links (footer/contact/privacy) + dataLayer
-  pushes: phone_call, generate_lead (form success only), book_call_click, email_click
-- privacy@fattail.ads → privacy@fattailads.com, now a mailto:
-- index.html: viewport/title/meta, GTM-KFF7DGR5 head+noscript, Consent Mode v2
-  bridge (reads localStorage 'fta_cookie_consent', listens to 'fta:consent-updated')
-
-## If re-exporting from Claude Design
-Do NOT ship the export directly — it will revert everything above. Diff the export's
-JSX against this folder and merge intentionally.
+## Changes made outside Claude Design on 2026-07-14 (already merged everywhere)
+- Approach-page bio Miami → Fort Lauderdale
+- Mobile responsive pass: useMobile() hook, two-row wrap nav, clamp() type and
+  padding, auto-fit grids, mobile work/article rows, table scroll wrappers
+- tel:+19542285080 links + conversion dataLayer pushes
+- privacy@fattail.ads → privacy@fattailads.com (mailto:)
+- index.html: viewport/title/meta description, GTM head+noscript, consent bridge
