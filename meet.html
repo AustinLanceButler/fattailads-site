@@ -272,11 +272,22 @@ footer.bot .wrap {
     window.__calReady = true;
     var l = document.getElementById("sched-loading"); if (l) l.style.display = "none";
   }});
-  // Fire a GTM conversion event on a completed booking.
+  // Conversion tracking on a completed booking. Cal may emit both bookingSuccessful and
+  // bookingSuccessfulV2 for one booking, so guard against double-counting.
+  var __calBooked = false;
   ["bookingSuccessful", "bookingSuccessfulV2"].forEach(function (ev) {
     Cal.ns.book("on", { action: ev, callback: function () {
+      if (__calBooked) return; __calBooked = true;
       window.dataLayer = window.dataLayer || [];
+      // dataLayer signal (kept for future GTM tag / funnel use).
       window.dataLayer.push({ event: "cal_booking_success" });
+      // GA4 conversion — fired via the gtag loaded by GTM's GA4 Google Tag (G-RD78J97VX0).
+      // Respects Consent Mode. Mark "book_call" as a Key Event in GA4.
+      // NOTE: if a GTM tag is ever added to fire book_call on the cal_booking_success
+      // dataLayer event, remove this gtag line to avoid double-counting.
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "book_call", { send_to: "G-RD78J97VX0", method: "cal_diy" });
+      }
     }});
   });
   // Graceful fallback: only if the embed still hasn't signaled ready after a long grace
