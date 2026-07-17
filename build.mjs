@@ -11,4 +11,7 @@ copyFileSync('index.html', 'dist/index.html');
 // Standalone, unlisted booking page → served at /meet (dist/meet/index.html).
 mkdirSync('dist/meet', { recursive: true });
 copyFileSync('meet.html', 'dist/meet/index.html');
-console.log('build complete: dist/app.js + dist/index.html + dist/meet/index.html');
+// Standalone, unlisted client-access page → served at /connect (dist/connect/index.html).
+mkdirSync('dist/connect', { recursive: true });
+copyFileSync('connect.html', 'dist/connect/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/meet/index.html + dist/connect/index.html');
