@@ -41,6 +41,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="description" content="Book a 30-minute paid-media working session with Austin Butler of Fat Tail Ads.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+<!-- Warm the connection to the self-hosted Cal origin so the embed's first request skips the TLS handshake -->
+<link rel="preconnect" href="https://cal.tail2dd94c.ts.net" crossorigin>
+<link rel="dns-prefetch" href="https://cal.tail2dd94c.ts.net">
 
 <style>/* ============================================================
    FAT TAIL ADS — Core tokens (mirrored from the main site)
@@ -276,13 +279,15 @@ footer.bot .wrap {
       window.dataLayer.push({ event: "cal_booking_success" });
     }});
   });
-  // Graceful fallback: if the embed never signals ready (e.g. network/host filter), point to Google Calendar.
+  // Graceful fallback: only if the embed still hasn't signaled ready after a long grace
+  // period (self-host is slower than SaaS), surface the Google Calendar route. The visible
+  // fallback line under the card already offers it, so this is a belt-and-suspenders nudge.
   setTimeout(function () {
     if (!window.__calReady) {
       var l = document.getElementById("sched-loading");
-      if (l) l.innerHTML = 'Taking too long? <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener" style="color:var(--vermillion-700);border-bottom:1px solid var(--vermillion-100)">Use our Google&nbsp;Calendar page &#8594;</a>';
+      if (l) l.innerHTML = 'Still loading&hellip; <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener" style="color:var(--vermillion-700);border-bottom:1px solid var(--vermillion-100)">skip the wait &#8594;</a>';
     }
-  }, 12000);
+  }, 30000);
   </script>
 </main>
 
