@@ -237,14 +237,53 @@ footer.bot .wrap {
 
   <div class="card">
     <div class="loading" id="sched-loading">Loading scheduler&hellip;</div>
-    <iframe
-      title="Book a call with Austin Butler"
-      src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ33Jxb4EIpB31H0BrBba3TRJWky0Ae0VBKCJeAjE8ufTUJ9Ls2v5xNuUfgpWqlqltku4U3qXGOF?gv=true"
-      loading="eager"
-      onload="var l=document.getElementById('sched-loading'); if(l){l.style.display='none';}"></iframe>
+    <div id="cal-inline" style="width:100%;min-height:640px;"></div>
   </div>
 
-  <p class="fallback">Scheduler not loading? <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Open it in a new tab &#8594;</a></p>
+  <p class="fallback">Prefer another way? <a href="https://cal.tail2dd94c.ts.net/austin/30min" target="_blank" rel="noopener">Open the booking page &#8594;</a> &nbsp;&middot;&nbsp; <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Google&nbsp;Calendar</a></p>
+
+  <!-- Cal.diy inline embed — self-hosted booking (Fat Tail Ads). Replaces the Google scheduler iframe. -->
+  <script>
+  (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document;
+    C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments;
+      if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; }
+      if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || [];
+        if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; }
+      p(cal, ar); };
+  })(window, "https://cal.tail2dd94c.ts.net/embed/embed.js", "init");
+
+  Cal("init", "book", { origin: "https://cal.tail2dd94c.ts.net" });
+  Cal.ns.book("inline", {
+    elementOrSelector: "#cal-inline",
+    calLink: "austin/30min",
+    config: { layout: "month_view", theme: "light" }
+  });
+  Cal.ns.book("ui", {
+    theme: "light",
+    layout: "month_view",
+    hideEventTypeDetails: false,
+    cssVarsPerTheme: { light: { "cal-brand": "#C8502A" }, dark: { "cal-brand": "#C8502A" } }
+  });
+  // Hide the loading overlay once the booker is ready.
+  Cal.ns.book("on", { action: "linkReady", callback: function () {
+    window.__calReady = true;
+    var l = document.getElementById("sched-loading"); if (l) l.style.display = "none";
+  }});
+  // Fire a GTM conversion event on a completed booking.
+  ["bookingSuccessful", "bookingSuccessfulV2"].forEach(function (ev) {
+    Cal.ns.book("on", { action: ev, callback: function () {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: "cal_booking_success" });
+    }});
+  });
+  // Graceful fallback: if the embed never signals ready (e.g. network/host filter), point to Google Calendar.
+  setTimeout(function () {
+    if (!window.__calReady) {
+      var l = document.getElementById("sched-loading");
+      if (l) l.innerHTML = 'Taking too long? <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener" style="color:var(--vermillion-700);border-bottom:1px solid var(--vermillion-100)">Use our Google&nbsp;Calendar page &#8594;</a>';
+    }
+  }, 12000);
+  </script>
 </main>
 
 <footer class="bot">
