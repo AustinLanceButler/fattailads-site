@@ -42,8 +42,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
 <!-- Warm the connection to the self-hosted Cal origin so the embed's first request skips the TLS handshake -->
-<link rel="preconnect" href="https://cal.tail2dd94c.ts.net" crossorigin>
-<link rel="dns-prefetch" href="https://cal.tail2dd94c.ts.net">
+<link rel="preconnect" href="https://book.fattailads.com" crossorigin>
+<link rel="dns-prefetch" href="https://book.fattailads.com">
 
 <style>/* ============================================================
    FAT TAIL ADS — Core tokens (mirrored from the main site)
@@ -243,7 +243,7 @@ footer.bot .wrap {
     <div id="cal-inline" style="width:100%;min-height:640px;"></div>
   </div>
 
-  <p class="fallback">Prefer another way? <a href="https://cal.tail2dd94c.ts.net/austin/30min" target="_blank" rel="noopener">Open the booking page &#8594;</a> &nbsp;&middot;&nbsp; <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Google&nbsp;Calendar</a></p>
+  <p class="fallback">Prefer another way? <a href="https://book.fattailads.com/austin/30min" target="_blank" rel="noopener">Open the booking page &#8594;</a> &nbsp;&middot;&nbsp; <a href="https://calendar.app.google/XKF91PmUWkr3qdDU7" target="_blank" rel="noopener">Google&nbsp;Calendar</a></p>
 
   <!-- Cal.diy inline embed — self-hosted booking (Fat Tail Ads). Replaces the Google scheduler iframe. -->
   <script>
@@ -253,9 +253,9 @@ footer.bot .wrap {
       if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || [];
         if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; }
       p(cal, ar); };
-  })(window, "https://cal.tail2dd94c.ts.net/embed/embed.js", "init");
+  })(window, "https://book.fattailads.com/embed/embed.js", "init");
 
-  Cal("init", "book", { origin: "https://cal.tail2dd94c.ts.net" });
+  Cal("init", "book", { origin: "https://book.fattailads.com" });
   Cal.ns.book("inline", {
     elementOrSelector: "#cal-inline",
     calLink: "austin/30min",
