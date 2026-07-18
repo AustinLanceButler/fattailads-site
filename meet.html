@@ -281,13 +281,9 @@ footer.bot .wrap {
       window.dataLayer = window.dataLayer || [];
       // dataLayer signal (kept for future GTM tag / funnel use).
       window.dataLayer.push({ event: "cal_booking_success" });
-      // GA4 conversion — fired via the gtag loaded by GTM's GA4 Google Tag (G-RD78J97VX0).
-      // Respects Consent Mode. Mark "book_call" as a Key Event in GA4.
-      // NOTE: if a GTM tag is ever added to fire book_call on the cal_booking_success
-      // dataLayer event, remove this gtag line to avoid double-counting.
-      if (typeof window.gtag === "function") {
-        window.gtag("event", "book_call", { send_to: "G-RD78J97VX0", method: "cal_diy" });
-      }
+      // book_call GA4 conversion now fires via GTM tag "GA4 event — book_call"
+      // on the cal_booking_success dataLayer event (container GTM-KFF7DGR5).
+      // Inline gtag removed to avoid double-counting.
     }});
   });
   // Graceful fallback: only if the embed still hasn't signaled ready after a long grace
