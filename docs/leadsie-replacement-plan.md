@@ -25,11 +25,11 @@ Legend: **Agency-side** = FTA's own credentials do the grant or send the invite;
 | # | Platform (Leadsie ask) | Client-OAuth possible? | Recommended Phase 1 mechanism | Gate for recommended path | Verify with (FTA-side) | Effort | vs Leadsie |
 |---|---|---|---|---|---|---|---|
 | 1 | **Google Ads** — manager link | Yes, but `adwords` is **restricted** (about 6-week review + annual CASA) | **Agency-side:** FTA MCC creates a `CustomerClientLink` with status PENDING; the client accepts in Ads UI or email | Google Ads API access level on the Cloud project. Developer tokens were retired 2026-09-09; **Explorer** (automatic) covers production accounts. Link services are not on Explorer's blocked list (our inference) | GAQL `customer_client_link.status = ACTIVE` | 5 h | About equal. The client types their customer ID and clicks Accept once |
-| 2 | **GA4** — Editor | Yes: Admin API `accessBindings.create` (**v1alpha only**) | Guided (Admin → Account access → add `austin.lance.butler@gmail.com` as Editor). Upgrade to client-OAuth in Phase 2 | None (Phase 1). Phase 2: sensitive-scope verification of `analytics.manage.users` | Agency `accountSummaries.list` shows the account | 3 h / +5 h OAuth | Worse in Phase 1 (manual typing); equal after Phase 2 |
+| 2 | **GA4** — Editor | Yes: Admin API `accessBindings.create` (**v1alpha only**) | Guided (Admin → Account access → add `austin@fattailads.com` as Editor). Upgrade to client-OAuth in Phase 2 | None (Phase 1). Phase 2: sensitive-scope verification of `analytics.manage.users` | Agency `accountSummaries.list` shows the account | 3 h / +5 h OAuth | Worse in Phase 1 (manual typing); equal after Phase 2 |
 | 3 | **GTM** — User | Yes: `accounts.user_permissions.create` | Guided, then client-OAuth in Phase 2 | Phase 2: `tagmanager.manage.users` verification | Agency `accounts.list` / `containers.list` | 3 h / +4 h | Same as GA4 |
 | 4 | **Search Console** — Full | **No user API.** The Site Verification API can only add *owners* | Guided (Settings → Users and permissions → Add user → Full) | None | Agency `sites.list` gives `permissionLevel` siteFullUser/siteOwner | 3 h | Equal. Leadsie does this semi-manually too |
 | 5 | **Merchant Center** — Standard | Yes: Merchant API `accounts.users.create` (STANDARD/ADMIN); invitee must accept | Guided, then client-OAuth in Phase 2 | Phase 2: `content` verification | `users.get` state VERIFIED / agency `accounts.list` | 3 h / +4 h | FTA must accept an invite by email (no documented API accept) |
-| 6 | **Business Profile** — Manager | Yes: `locations.admins.create`; invitee must accept | Guided (client invites the Gmail as Manager). **FTA auto-accepts** via `accounts.invitations.list/accept` | **GBP API access approval** (0 QPM until approved). Already filed for project 435723479172, case 1-7091000040979 | Agency locations list | 4 h / +4 h | Equal once auto-accept works; blocked until GBP approval |
+| 6 | **Business Profile** — Manager | Yes: `locations.admins.create`; invitee must accept | Guided (client invites `austin@fattailads.com` as Manager). **FTA auto-accepts** via `accounts.invitations.list/accept` | **GBP API access approval** (0 QPM until approved). Filed 2026-09-22 for project 435723479172 (case 1-7091000040979), which covers the FTA-side calls. Phase 2 client-side grants need a second filing for the `fta-connect` project (§3) | Agency locations list | 4 h / +4 h | Equal once auto-accept works; blocked until GBP approval |
 | 7 | **YouTube** — Editor | **No API** for channel permissions | Guided (Studio → Settings → Permissions → Invite; invite expires in 30 d) | None | **Not API-verifiable.** Channel-permission invitees can't use YouTube APIs; Austin confirms manually in the admin view | 2 h | Equal. Leadsie is guided-only too |
 | 8 | **Meta** — Ad acct, Page, Catalog, Dataset, IG → partner BM 1874940222979161 | Yes for ad account, Page and dataset (`/{asset}/agencies`). **Catalog is legacy-only; IG unclear.** Requires Advanced Access, App Review, BV and Access Verification | **Guided "Share with partner"** (Business Settings → Partners → add FTA business ID → pick all 5 asset types) in one client action. Optional agency-initiated request for ad account/Page (`POST /{fta_bm}/client_ad_accounts`, `/client_pages`) when the client gives IDs. Then FTA **auto-assigns the team** with `POST /{asset}/assigned_users` via its system-user token | FTA acting in its own BM with its own system user: Standard access, no App Review (**spike to confirm in Phase 0**) | `GET /{fta_bm}/client_ad_accounts`, `client_pages`, `client_product_catalogs`, `client_pixels`, `client_instagram_assets` | 8 h + 3 h team | Worse: the client must find Business Settings. Personal ad accounts must first be moved into a portfolio (inferred) |
 | 9 | **LinkedIn** — Page Content Admin, Ad Account Campaign Mgr | Ad account: yes (`PUT /rest/adAccountUsers`, `rw_ads`), but Dev tier caps edits at 5 mapped accounts, so Standard tier is needed (discretionary). **Page: no API** ("cannot be granted…through the API") | Guided for both: Page admin tools add Austin as Content Admin (**must be a 1st-degree connection**); Campaign Manager → Manage access add Austin as Campaign Manager | Advertising API **Development tier** for Austin's own read token (linkedin-mcp app likely already has it) | `organizationAcls?q=roleAssignee&state=APPROVED`; `adAccountUsers?q=authenticatedUser` | 4 h | Equal. Leadsie is also semi-manual for both |
@@ -108,16 +108,22 @@ A subdomain or separate repo would add a Vercel project, DNS records and duplica
 - **No client tokens are stored**, and Phase 1 has none at all.
 - In Phase 2, the client's OAuth access token lives only in the callback function's memory. We request no `offline_access` or refresh token (Google `access_type=online`), use it for the single grant call, then drop it. It is never logged.
 - FTA-side tokens are the only persisted secrets. Why they must persist: the cron verification and Microsoft's rotating refresh token need them.
-  - Google refresh token for austin.lance.butler@gmail.com: `adwords`, `webmasters.readonly`, `analytics.readonly`, `tagmanager.readonly`, `content`, `business.manage`. Only Austin consents, so the personal-use exemption applies.
+  - Google refresh token for **austin@fattailads.com**: `adwords`, `webmasters.readonly`, `analytics.readonly`, `tagmanager.readonly`, `content`, `business.manage`. It's minted in the **ops project** (see Google Cloud projects below). Only Austin consents, so the personal-use exemption applies, and `adwords` never has to be declared on the client-facing verified app.
   - Meta system-user token (60-day refreshable).
   - LinkedIn member token (60-day access, 365-day non-rolling refresh).
   - Microsoft refresh token (rotates; store newest).
 - Encryption key `CONNECT_ENC_KEY` lives in a Vercel **Sensitive** env var.
 - Use dedicated credentials for this app, **not** the MCP servers' tokens, to limit blast radius.
 
+**Google Cloud projects (decided 2026-09-24)**
+| Project | Owner / org | User type | Used for | Why |
+|---|---|---|---|---|
+| **Ops:** existing `ga4-mcp-project-498920` (#435723479172) | personal, no org | External, in production, **not** submitted for verification | FTA-side token only (Austin consents once as austin@fattailads.com): Google Ads link create/verify, all read-back verification, GBP invitation auto-accept | Its GBP API application is already pending. It's the proven personal-use pattern the MCP servers use. It keeps the restricted `adwords` scope off the verified app. Google Ads API access level (Explorer) is set here |
+| **Client-facing:** new `fta-connect` | fattailads.com org (651299695749), austin@fattailads.com owner, FTA business billing | External, **verified** | Phase 2 one-click client OAuth (sensitive scopes only) + admin "Sign in with Google" | Consent screen reads "Fat Tail Ads" on the verified fattailads.com domain. Workspace-owned, so it survives personal-account changes. Isolated from personal MCP projects, so a review problem can't touch them. Needs its own GBP API filing for Phase 2 |
+
 **Link model**
 - Main link `/connect` = slug `main`, all 10 platforms, manage mode.
-- Custom links `/connect/<random-10-char>` override platforms, mode, MCC (FTA vs PP+K), notify recipients and redirect.
+- Custom links `/connect/<random-10-char>` override platforms, mode, notify recipients and redirect. Google Ads always links to the FTA MCC; PP+K is out of scope.
 - `?mode=view` is honored only if the link allows it.
 
 **Branding**
@@ -134,7 +140,7 @@ A subdomain or separate repo would add a Vercel project, DNS records and duplica
 - `connect_page_view` push is kept byte-for-byte. Optional new dataLayer events: `connect_step_view`, `connect_ids_submitted` (no PII).
 
 **Admin dashboard (`/connect/admin`)**
-- Sign-in: Google "Sign in with Google" (openid email, non-sensitive) → server checks `email == austin.lance.butler@gmail.com` → HMAC-signed, HttpOnly, Secure, SameSite=Strict session cookie (8 h).
+- Sign-in: Google "Sign in with Google" (openid email, non-sensitive) → server checks `email == austin@fattailads.com` → HMAC-signed, HttpOnly, Secure, SameSite=Strict session cookie (8 h).
 - Features:
   - Request list with per-platform status chips.
   - Verify now, resend link (copy or email), cancel pending MS/Google link.
@@ -164,7 +170,7 @@ Effort below is **Claude build hours**. Austin's own time per phase is in §5.
 
 | Phase | Scope | Acceptance tests | Effort | Depends on |
 |---|---|---|---|---|
-| **0 — Gates & spikes** (start now) | Fix Leadsie MS routing. Create FTA Microsoft manager account; confirm dev token. `/privacy` + `/terms` pages. Check GBP case 1-7091000040979. Confirm Google Ads access level = Explorer on the chosen Cloud project. Meta spike: FTA system user reads `client_*` edges + `assigned_users` with Standard access. LinkedIn spike: Austin's token reads `organizationAcls`/`adAccountUsers`. Neon + Resend accounts (gated). **File Google brand + sensitive-scope verification** for the Phase 2 scopes (after checking the Data Access page classification) so the review clock runs during Phase 1. | Each spike returns real data for an existing FTA client asset; privacy/terms 200 on preview | 8–10 h | Austin: MS account creation, any BV paperwork, DNS approval |
+| **0 — Gates & spikes** (start now) | Fix Leadsie MS routing. Create FTA Microsoft manager account (none exists); confirm dev token. Start Meta Business Verification; add a backup Meta admin; create the `fta-connect` Meta system user. Create the `fta-connect` Cloud project in the fattailads.com org. `/privacy` + `/terms` pages. Check GBP case 1-7091000040979. Confirm Google Ads access level = Explorer on the chosen Cloud project. Meta spike: FTA system user reads `client_*` edges + `assigned_users` with Standard access. LinkedIn spike: Austin's token reads `organizationAcls`/`adAccountUsers`. Neon + Resend accounts (gated). **File Google brand + sensitive-scope verification** for the Phase 2 scopes (after checking the Data Access page classification) so the review clock runs during Phase 1. | Each spike returns real data for an existing FTA client asset; privacy/terms 200 on preview | 8–10 h | Austin: MS account creation, any BV paperwork, DNS approval |
 | **1 — Lean replacement, all 10 platforms** | Wizard + link model + DB + agency-side invites (Google Ads, MS Ads, Meta request) + guided cards (GA4, GTM, SC, Merchant, GBP, YouTube, LinkedIn, Meta share) + 15-min verify cron + GA4 `connect_completed` + basic admin list | On preview: a test client (Austin's own sandbox assets) completes each platform; each item flips to verified within 15 min; one GA4 `connect_completed` (source `fta_connect`) seen in DebugView; `connect_page_view` still fires under consent; MS link routes to FTA manager account | 40–50 h | Phase 0 spikes |
 | **2 — One-click Google** (verification filed in Phase 0; build lands when review clears) | Client-OAuth for GA4, GTM, Merchant, GBP (incremental scopes, online access, no stored token); Google sensitive-scope verification in a Cloud project under the fattailads.com org | Verified consent screen shows "Fat Tail Ads"; each grant succeeds and verifies; DB has no client token | 18–22 h + 1–2 wk review | `/privacy` live; demo video; GBP approval |
 | **3 — Dashboard & polish** | Full admin (resend, cancel, link builder), token-health cron + emails, Resend notifications, completion CTA/redirect, WAF rule, audit viewer | Expiry warning fires on a token forced to T-13 d; resend email arrives; rate limit returns 429 | 12–16 h | Phase 1 |
@@ -206,12 +212,25 @@ Claude writes all the code on Austin's flat-rate Business plan, so its hours cos
 2. File the Google sensitive-scope verification in Phase 0 alongside everything else, so the review clock runs during the build.
 3. Fix the Microsoft routing in Leadsie today regardless.
 
-## 6. Open questions (Austin only)
-1. **Tier C (recommended) or B?** C adds one-click Google for about 1.5 h more of your time: the verification form and recording the demo video.
-2. **Microsoft Ads:** create a new FTA manager account, and who is its Super Admin? Should clients be billed directly (`IsBillToClient=true`)?
-3. **Receiving identity for Google grants:** `austin.lance.butler@gmail.com` (as today), or `austin@fattailads.com` (Workspace, survives staff changes)? Also, which Cloud project or org hosts the app? The GBP approval is tied to project 435723479172.
-4. **Google Ads MCC:** FTA MCC by default, with PP+K SEM MCC selectable per custom link?
-5. **Meta:** is the FTA portfolio already business-verified? Is guided "Share with partner" UX acceptable, or is one-click Meta worth 2–6 weeks of Meta review?
-6. **LinkedIn:** is it OK that clients must connect with your personal profile to add you as Page admin?
-7. **Languages:** English only, dropping Leadsie's 8?
-8. **Leadsie timing:** keep it until RiffleCM's onboarding is fully done? Switch to annual if choosing A?
+## 6. Decisions (Austin, 2026-09-24) and Phase 0 findings
+| # | Question | Decision |
+|---|---|---|
+| 1 | Tier | **C** (full parity) |
+| 2 | Microsoft Ads | Create an FTA-owned manager account; **clients billed directly** (`IsBillToClient=true`, FTA never pre-bills) |
+| 3 | Google receiving identity | **austin@fattailads.com**. Cloud projects as in §3 (ops = existing project, client-facing = new `fta-connect` in the fattailads.com org) |
+| 4 | Google Ads MCC | **FTA MCC only**, no PP+K |
+| 5 | Meta | Found in Chrome (below) |
+| 6 | LinkedIn Page needs a 1st-degree connection | Accepted |
+| 7 | Languages | English only |
+| 8 | Leadsie timing | Decide once the build pace is known; cancel after cutover |
+
+**Phase 0 findings (2026-09-24):**
+- **Microsoft Ads:** Austin's login (austin.lance.butler@gmail.com, user 95277130) belongs only to the Jiffy Lube, Ascend and Teguar customers. **No FTA-owned manager account exists yet.** Sign-in uses a passkey, so Austin completes it. Creating the account is Austin's final click.
+- **Meta:** the Fat Tail Ads portfolio (1874940222979161) is **not business-verified** ("Eligible for verification"). Already in place: system user **Fattail Connector** (ID 61593607546639, admin) and app **fat-tail-ads-mcp** (1714348542931835, owned by FTA). Security Center flags: **Austin is the only business admin**, so add a backup admin; no trusted domains; 1 inactive ad account owned by others.
+  - Recommendation: **start Business Verification in Phase 0.** It's free and takes days to weeks, and it's the fallback if the Standard-access test fails. Use a *new* system user (`fta-connect`) for this app, not Fattail Connector.
+
+## 7. Remaining open items
+1. **Microsoft manager account details:** business name, address and a contact. Austin enters them and clicks Create.
+2. **Meta Business Verification:** Austin supplies the legal documents (LLC articles or EIN letter, a utility bill or bank statement matching the address).
+3. **Backup Meta admin:** who should it be?
+4. **Leadsie cancellation date:** set after Phase 1.
