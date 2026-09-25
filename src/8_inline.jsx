@@ -44,11 +44,11 @@ function App() {
   const openCase = (c) => { setActiveCase(c); setPage('case'); window.scrollTo(0, 0); };
   const openArticle = (slug) => { setActiveArticle(slug); setPage('article'); window.scrollTo(0, 0); };
 
-  // Let the cookie banner's "privacy policy" link navigate to the privacy page.
+  // /privacy links here as /#cookie-settings — open the preferences panel on arrival.
   React.useEffect(() => {
-    const toPrivacy = () => go('privacy');
-    window.addEventListener('fta:goto-privacy', toPrivacy);
-    return () => window.removeEventListener('fta:goto-privacy', toPrivacy);
+    if (window.location.hash === '#cookie-settings') {
+      window.dispatchEvent(new CustomEvent('fta:open-cookie-prefs'));
+    }
   }, []);
 
   return (
@@ -68,7 +68,6 @@ function App() {
       {page === 'article' && activeArticle && <ArticlePage slug={activeArticle} onBack={() => go('research')} />}
       {page === 'about' && <AboutPage />}
       {page === 'contact' && <ContactPage />}
-      {page === 'privacy' && <PrivacyPage />}
       <Footer onNavigate={go} />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
       <CookieConsent />

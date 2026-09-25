@@ -162,8 +162,8 @@ function Footer({ onNavigate }) {
         <div>
           <Eyebrow>Legal</Eyebrow>
           <div style={{ marginTop: 12, fontSize: 13, lineHeight: 1.8, color: 'var(--ink-1)' }}>
-            <a onClick={() => go('privacy')} style={{ cursor: 'pointer', display: 'block' }}>Privacy</a>
-            <a onClick={() => go('privacy')} style={{ cursor: 'pointer', display: 'block' }}>Terms</a>
+            <a href="/privacy" style={{ cursor: 'pointer', display: 'block', color: 'inherit', textDecoration: 'none' }}>Privacy</a>
+            <a href="/terms" style={{ cursor: 'pointer', display: 'block', color: 'inherit', textDecoration: 'none' }}>Terms</a>
             <a onClick={openCookiePrefs} style={{ cursor: 'pointer', display: 'block' }}>Cookie settings</a>
             <span style={{ display: 'block', color: 'var(--ink-3)' }}>EIN on request</span>
           </div>

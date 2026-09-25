@@ -13,6 +13,10 @@ output of the commit — nothing else.
 - Booking page: edit /meet.html — plain standalone HTML, copied to
   dist/meet/index.html and served at /meet. It is NOT part of the React app
   and NOT a Claude Design export; edit it directly.
+- Legal pages: edit /privacy.html and /terms.html — standalone HTML copied to
+  dist/privacy/ and dist/terms/, served at /privacy and /terms (indexable). They
+  are the ONLY copy of the policy text; the SPA footer and cookie banner link to
+  them. /#cookie-settings on the homepage opens the cookie preferences panel.
 - NEVER commit a compiled app.js or a raw Claude Design export bundle here.
   Claude Design exports must be diffed against src/ and merged intentionally
   (Design's runtime keeps babel-standalone + dev React; production must not).

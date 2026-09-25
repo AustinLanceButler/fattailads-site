@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="index, follow">
+
+<!-- Consent Mode v2 default — reads the same localStorage key the main site's banner writes -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  function mapConsent(r) {
+    function g(b) { return b ? 'granted' : 'denied'; }
+    return {
+      ad_storage: g(r && r.advertising),
+      ad_user_data: g(r && r.advertising),
+      ad_personalization: g(r && r.advertising),
+      analytics_storage: g(r && r.analytics),
+      functionality_storage: g(r && r.functional),
+      personalization_storage: g(r && r.functional),
+      security_storage: 'granted'
+    };
+  }
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('fta_cookie_consent') || 'null'); } catch (e) {}
+  var d = mapConsent(stored);
+  if (!stored) { d.wait_for_update = 500; }
+  gtag('consent', 'default', d);
+  window.addEventListener('fta:consent-updated', function (e) { gtag('consent', 'update', mapConsent(e.detail)); });
+})();
+</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KFF7DGR5');</script>
+<!-- End Google Tag Manager -->
+
+<title>Privacy policy — Fat Tail Ads</title>
+<meta name="description" content="How Fat Tail Ads, LLC collects, uses, and protects personal information across our website, client-access tool, and advertising measurement work.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+<style>/* ============================================================
+   FAT TAIL ADS — Core tokens (mirrored from the main site)
+   ============================================================ */
+:root {
+  --paper-0:  #FBF8F3;
+  --paper-1:  #F5F1E8;
+  --paper-2:  #EAE4D6;
+  --paper-3:  #D8D0BD;
+
+  --ink-0:    #14120E;
+  --ink-1:    #2A2720;
+  --ink-2:    #5C564A;
+  --ink-3:    #8A8576;
+  --ink-4:    #B5AF9F;
+
+  --vermillion-50:  #FBEDE5;
+  --vermillion-100: #F5D4C2;
+  --vermillion-300: #E89169;
+  --vermillion-500: #C8502A;  /* brand primary */
+  --vermillion-700: #8E3516;
+  --vermillion-900: #4A1B0A;
+
+  --bg:        var(--paper-0);
+  --fg:        var(--ink-0);
+  --fg-body:   var(--ink-1);
+  --fg-muted:  var(--ink-2);
+  --fg-subtle: var(--ink-3);
+  --border:    var(--paper-3);
+  --accent:        var(--vermillion-500);
+  --accent-hover:  var(--vermillion-700);
+  --accent-soft:   var(--vermillion-50);
+
+  --font-display: "Fraunces", "Times New Roman", Georgia, serif;
+  --font-sans:    "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+
+  --t-mono-xs: 11px;
+  --t-base:    15px;
+  --t-lg:      20px;
+
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+
+  --lh-tight:  1.05;
+  --lh-snug:   1.2;
+  --lh-normal: 1.45;
+
+  --tr-tighter: -0.03em;
+  --tr-tight:   -0.01em;
+  --tr-wider:    0.12em;
+
+  --r-1: 2px;
+  --r-2: 4px;
+
+  --shadow-2: 0 2px 0 rgba(20,18,14,0.03), 0 4px 10px rgba(20,18,14,0.06);
+  --shadow-3: 0 8px 28px -12px rgba(20,18,14,0.22);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg-body);
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-normal);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+::selection { background: var(--vermillion-100); color: var(--ink-0); }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+
+/* ── Top bar ─────────────────────────────────────────── */
+header.top {
+  border-bottom: 0.5px solid var(--paper-3);
+  background: var(--paper-0);
+  position: sticky; top: 0; z-index: 10;
+}
+header.top .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-top: 18px; padding-bottom: 18px;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--ink-0); letter-spacing: -0.005em; text-transform: uppercase;
+  text-decoration: none;
+}
+.brand .tag {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-2);
+  font-weight: 500; letter-spacing: 0.14em; margin-left: 8px;
+  padding-left: 10px; border-left: 1px solid var(--paper-3);
+}
+.top-links { display: inline-flex; align-items: center; gap: 18px; }
+.top-link {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+  letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+}
+.top-link:hover { color: var(--ink-0); }
+.top-link.current { color: var(--ink-0); border-bottom: 1px solid var(--vermillion-500); }
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero { padding: clamp(44px, 8vw, 84px) 0 10px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: var(--t-mono-xs); font-weight: var(--w-medium);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--fg-muted);
+}
+.h1legal {
+  font-family: var(--font-display); font-weight: var(--w-medium);
+  font-size: clamp(38px, 9vw, 64px); letter-spacing: -0.028em;
+  line-height: 1.02; color: var(--ink-0); margin: 18px 0 20px;
+  font-variation-settings: "opsz" 144;
+}
+.lede {
+  font-family: var(--font-display); font-style: italic; font-size: clamp(18px, 2.4vw, 21px);
+  line-height: var(--lh-normal); color: var(--fg-body); max-width: 56ch; margin: 0 0 24px;
+  font-variation-settings: "opsz" 72;
+}
+.meta-line { display: flex; gap: 28px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── Curve divider ───────────────────────────────────── */
+.curve { margin: 30px 0 10px; }
+
+/* ── Legal body: TOC + content ──────────────────────── */
+.legal-body { padding: 20px 0 96px; }
+.legal-grid { display: grid; grid-template-columns: 1fr; gap: 28px; align-items: start; }
+.toc { border-top: 1px solid var(--ink-0); padding-top: 16px; }
+.toc-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 14px; }
+.toc ol { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 9px; }
+.toc li { display: flex; gap: 10px; align-items: baseline; }
+.toc-n { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); flex: 0 0 auto; }
+.toc a { font-size: 12.5px; line-height: 1.4; color: var(--ink-2); text-decoration: none; }
+.toc a:hover { color: var(--vermillion-700); }
+.legal-content { border-top: 1px solid var(--ink-0); min-width: 0; } /* lets the table wrapper scroll instead of widening the grid */
+.legal-section { padding: 40px 0; border-bottom: 0.5px solid var(--paper-3); scroll-margin-top: 84px; }
+.legal-section.last { border-bottom: none; }
+.legal-h {
+  font-family: var(--font-display); font-weight: 500; font-size: 28px; letter-spacing: -0.018em;
+  color: var(--ink-0); margin: 0 0 16px; line-height: 1.12;
+  font-variation-settings: "opsz" 72; display: flex; align-items: baseline; gap: 14px;
+}
+.legal-num { font-family: var(--font-mono); font-size: 13px; color: var(--vermillion-500); font-weight: 500; letter-spacing: 0.04em; flex: 0 0 auto; }
+.legal-p { font-size: 15px; line-height: 1.7; color: var(--ink-1); margin: 0 0 14px; max-width: 70ch; }
+.legal-p.muted { color: var(--ink-2); }
+.legal-p a { color: var(--vermillion-700); border-bottom: 1px solid var(--vermillion-100); text-decoration: none; }
+.legal-p a:hover { border-bottom-color: var(--vermillion-500); }
+.legal-sub { font-family: var(--font-sans); font-weight: 600; font-size: 14px; letter-spacing: 0.01em; color: var(--ink-0); margin: 22px 0 10px; }
+.legal-list { list-style: none; padding: 0; margin: 0 0 14px; border-top: 0.5px solid var(--paper-3); max-width: 70ch; }
+.legal-list li { padding: 11px 0; border-bottom: 0.5px solid var(--paper-3); font-size: 14.5px; line-height: 1.6; color: var(--ink-1); display: flex; gap: 12px; align-items: baseline; }
+.legal-mark { color: var(--vermillion-500); font-family: var(--font-mono); font-size: 11px; flex: 0 0 auto; }
+.legal-table-wrap { overflow-x: auto; margin: 8px 0 18px; max-width: 100%; }
+.legal-table { border-collapse: collapse; width: 100%; min-width: 640px; font-family: var(--font-sans); font-size: 13px; }
+.legal-table thead tr { border-top: 1px solid var(--ink-0); border-bottom: 0.5px solid var(--paper-3); }
+.legal-table th { text-align: left; padding: 10px 14px 10px 0; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; vertical-align: bottom; }
+.legal-table td { padding: 12px 14px 12px 0; vertical-align: top; border-bottom: 0.5px solid var(--paper-3); }
+.legal-table tbody tr:last-child td { border-bottom: 0.5px solid var(--paper-3); }
+.legal-table td.cat { color: var(--ink-0); font-weight: 600; white-space: nowrap; }
+.legal-table td.party { color: var(--ink-2); white-space: nowrap; }
+.legal-table td.purpose { color: var(--ink-1); line-height: 1.5; }
+.legal-table td.life { color: var(--ink-2); font-family: var(--font-mono); font-size: 11.5px; white-space: nowrap; }
+.legal-table td.basis { white-space: nowrap; }
+.basis-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.basis-tag.always { color: var(--ink-3); }
+.basis-tag.consent { color: var(--vermillion-700); }
+.btn-dark { display: inline-block; font-family: var(--font-sans); font-weight: 500; font-size: 13px; padding: 9px 16px; border-radius: var(--r-1); cursor: pointer; background: var(--ink-0); color: #FBF8F3; border: 1px solid var(--ink-0); text-decoration: none; }
+.contact-card { background: var(--paper-1); border: 1px solid var(--border); border-radius: var(--r-2); padding: 20px 22px; max-width: 420px; }
+.contact-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
+.contact-lines { font-family: var(--font-mono); font-size: 14px; color: var(--ink-0); line-height: 1.9; }
+.contact-lines a { color: inherit; text-decoration: none; }
+
+/* ── Footer ──────────────────────────────────────────── */
+footer.bot { border-top: 0.5px solid var(--paper-3); }
+footer.bot .wrap {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-top: 22px; padding-bottom: 40px;
+}
+.foot-brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans);
+  font-weight: 600; font-size: 12px; color: var(--ink-1); text-transform: uppercase; letter-spacing: -0.005em; }
+.foot-links { display: inline-flex; align-items: center; gap: 16px; }
+.muted { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+
+@media (min-width: 701px) {
+  .legal-grid { grid-template-columns: 220px 1fr; gap: 64px; }
+  .toc { position: sticky; top: 96px; }
+}
+@media (max-width: 700px) {
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; }
+  .brand .tag { display: none; }
+  .top-link.hide-mobile { display: none; }
+  .hero { padding-top: 40px; }
+}
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KFF7DGR5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://fattailads.com/" aria-label="Fat Tail Ads home">
+      <span id="fta-monogram"></span>
+      Fat&nbsp;Tail&nbsp;Ads
+      <span class="tag">Performance&nbsp;Media&nbsp;Consultancy</span>
+    </a>
+    <span class="top-links">
+      <a class="top-link current" href="/privacy">Privacy</a>
+      <a class="top-link" href="/terms">Terms</a>
+      <a class="top-link hide-mobile" href="https://fattailads.com/">fattailads.com&nbsp;&#8599;</a>
+    </span>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Legal &middot; Privacy</span>
+    <h1 class="h1legal">Privacy policy.</h1>
+    <p class="lede">How Fat Tail Ads collects, uses, and protects information &mdash; written to be read, not to be hidden behind.</p>
+    <div class="meta-line">
+      <span>Last updated &middot; September 25, 2026</span>
+      <span>Fat Tail Ads, LLC &middot; Florida, USA</span>
+    </div>
+  </section>
+
+  <div class="curve" id="fta-curve" aria-hidden="true"></div>
+
+  <section class="legal-body">
+    <div class="legal-grid">
+
+      <nav class="toc">
+        <div class="toc-label">Contents</div>
+        <ol>
+          <li><span class="toc-n">01</span><a href="#s1">Who we are</a></li>
+          <li><span class="toc-n">02</span><a href="#s2">Scope</a></li>
+          <li><span class="toc-n">03</span><a href="#s3">Information we collect</a></li>
+          <li><span class="toc-n">04</span><a href="#s4">Cookies &amp; similar technologies</a></li>
+          <li><span class="toc-n">05</span><a href="#s5">First-party vs third-party cookies</a></li>
+          <li><span class="toc-n">06</span><a href="#s6">Third-party services &amp; processors</a></li>
+          <li><span class="toc-n">07</span><a href="#s7">How we use information</a></li>
+          <li><span class="toc-n">08</span><a href="#s8">Legal bases (EEA/UK)</a></li>
+          <li><span class="toc-n">09</span><a href="#s9">Advertising &amp; measurement</a></li>
+          <li><span class="toc-n">10</span><a href="#s10">Client account access</a></li>
+          <li><span class="toc-n">11</span><a href="#s11">Google user data</a></li>
+          <li><span class="toc-n">12</span><a href="#s12">Meta data &amp; deletion</a></li>
+          <li><span class="toc-n">13</span><a href="#s13">How we share information</a></li>
+          <li><span class="toc-n">14</span><a href="#s14">Data retention</a></li>
+          <li><span class="toc-n">15</span><a href="#s15">Your privacy rights</a></li>
+          <li><span class="toc-n">16</span><a href="#s16">Do Not Track &amp; Global Privacy Control</a></li>
+          <li><span class="toc-n">17</span><a href="#s17">International transfers</a></li>
+          <li><span class="toc-n">18</span><a href="#s18">Children&rsquo;s privacy</a></li>
+          <li><span class="toc-n">19</span><a href="#s19">Security</a></li>
+          <li><span class="toc-n">20</span><a href="#s20">Changes to this policy</a></li>
+          <li><span class="toc-n">21</span><a href="#s21">Contact</a></li>
+        </ol>
+      </nav>
+
+      <div class="legal-content">
+
+        <section id="s1" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;01</span><span>Who we are</span></h2>
+          <p class="legal-p">Fat Tail Ads, LLC ("Fat Tail Ads," "we," "us," or "our") is a performance-media consultancy registered in Florida, United States. This policy explains how we handle personal information collected through this website, our client portal, our intake and contact forms, and the marketing and measurement work we perform on behalf of clients.</p>
+          <p class="legal-p">For most personal information processed through this website, Fat Tail Ads acts as the <em>controller</em>. When we run advertising, analytics, or measurement on behalf of a client, we typically act as a <em>processor</em> (or service provider) on that client's instructions, and the client's own privacy policy governs that data. Where the two roles meet, this policy describes our website practices; the relevant client engagement agreement governs the rest.</p>
+        </section>
+
+        <section id="s2" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;02</span><span>Scope</span></h2>
+          <p class="legal-p">This policy applies to this website and directly connected services. It does not apply to third-party websites we link to, to advertising platforms operated by others (such as Google, Meta, Microsoft, or LinkedIn), or to a client's own properties where we are engaged as a service provider. Those are governed by their respective operators' policies.</p>
+        </section>
+
+        <section id="s3" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;03</span><span>Information we collect</span></h2>
+          <h3 class="legal-sub">Information you provide directly</h3>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Contact and inquiry details &mdash; name, work email, phone, company, role, and the message you submit through our forms.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Engagement information &mdash; monthly media spend, primary channel, and other context you share when scoping an engagement.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Client-portal credentials &mdash; email and authentication data if you are granted portal access, plus documents shared within an engagement.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Correspondence &mdash; the content of emails, calls, and messages you send us.</span></li>
+          </ul>
+          <h3 class="legal-sub">Information collected automatically</h3>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Device &amp; connection data &mdash; IP address, browser type, operating system, and language, recorded in standard server logs.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Usage data &mdash; pages viewed, referring URLs, time on page, and interaction events, where analytics are enabled with your consent.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Cookies &amp; identifiers &mdash; see &sect;04 and &sect;05 below.</span></li>
+          </ul>
+          <p class="legal-p muted">We do not intentionally collect special-category (sensitive) personal data through this website, and we ask that you do not submit it through our forms.</p>
+        </section>
+
+        <section id="s4" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;04</span><span>Cookies &amp; similar technologies</span></h2>
+          <p class="legal-p">Cookies are small text files stored on your device. We also use related technologies &mdash; local storage, pixels (web beacons), software development kits, and server-to-server event APIs &mdash; which we refer to collectively as "cookies" here. We group them into four categories:</p>
+
+          <div class="legal-table-wrap">
+            <table class="legal-table">
+              <thead>
+                <tr>
+                  <th>Category</th><th>Party</th><th>Purpose</th><th>Typical lifespan</th><th>Basis</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cat">Strictly necessary</td>
+                  <td class="party">First-party</td>
+                  <td class="purpose">Session, security, load-balancing, consent state, portal authentication.</td>
+                  <td class="life">Session &ndash; 12 months</td>
+                  <td class="basis"><span class="basis-tag always">Always on</span></td>
+                </tr>
+                <tr>
+                  <td class="cat">Performance &amp; analytics</td>
+                  <td class="party">First &amp; third-party</td>
+                  <td class="purpose">Aggregate traffic measurement, page performance, error monitoring.</td>
+                  <td class="life">Up to 24 months</td>
+                  <td class="basis"><span class="basis-tag consent">Consent</span></td>
+                </tr>
+                <tr>
+                  <td class="cat">Functional</td>
+                  <td class="party">First &amp; third-party</td>
+                  <td class="purpose">Remembering preferences, form state, embedded scheduling.</td>
+                  <td class="life">Up to 12 months</td>
+                  <td class="basis"><span class="basis-tag consent">Consent</span></td>
+                </tr>
+                <tr>
+                  <td class="cat">Advertising &amp; targeting</td>
+                  <td class="party">Third-party</td>
+                  <td class="purpose">Conversion measurement, retargeting, audience building, lift testing.</td>
+                  <td class="life">Up to 13 months</td>
+                  <td class="basis"><span class="basis-tag consent">Consent</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="legal-p">Strictly necessary cookies are required for the site to function and cannot be switched off. All other categories are off by default until you consent. You can accept, reject, or fine-tune categories at any time:</p>
+          <p><a class="btn-dark" href="/#cookie-settings">Manage cookie preferences</a></p>
+          <p class="legal-p muted">You can also use Cookie settings in the site footer.</p>
+        </section>
+
+        <section id="s5" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;05</span><span>First-party vs third-party cookies</span></h2>
+          <p class="legal-p"><strong style="color:var(--ink-0)">First-party cookies</strong> are set by this domain. We use them to keep the site working, remember your consent choices, hold your form and portal state, and measure our own traffic. They are not shared with advertisers.</p>
+          <p class="legal-p"><strong style="color:var(--ink-0)">Third-party cookies</strong> are set by other domains whose services we embed &mdash; analytics, advertising, scheduling, and measurement providers. When enabled with your consent, these allow the relevant provider to recognize your browser across sites for the purposes described in &sect;04. Because browsers and platforms are deprecating third-party cookies, we increasingly rely on first-party and server-side measurement (see &sect;09) rather than cross-site tracking.</p>
+        </section>
+
+        <section id="s6" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;06</span><span>Third-party services &amp; processors</span></h2>
+          <p class="legal-p">We rely on a small set of vendors to operate the site and our practice. Each processes personal information only as needed for its function, under its own terms and our agreements:</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Hosting &amp; content delivery &mdash; to serve this website and log requests.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Analytics &mdash; e.g. Google Analytics, for aggregate traffic measurement (consent-gated).</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Advertising &amp; measurement platforms &mdash; e.g. Google Ads, Microsoft Advertising, Meta, LinkedIn, TikTok &mdash; for conversion measurement and, where applicable, retargeting and lift testing (consent-gated).</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>CRM &amp; forms &mdash; e.g. a GoHighLevel-based pipeline that receives and stores inquiry submissions.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Scheduling &mdash; embedded calendar/booking tools used to arrange calls.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Email &amp; productivity &mdash; to correspond with you and manage engagements.</span></li>
+          </ul>
+          <p class="legal-p muted">A current list of processors and the safeguards applied is available on request via the contact in &sect;21.</p>
+        </section>
+
+        <section id="s7" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;07</span><span>How we use information</span></h2>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Respond to inquiries, scope engagements, and provide our services.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Operate, secure, and improve this website and the client portal.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Measure the performance of our own marketing &mdash; with consent where required.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Send engagement-related and, where permitted, occasional practice updates. You can opt out of the latter at any time.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Comply with legal, tax, and contractual obligations, and enforce our agreements.</span></li>
+          </ul>
+        </section>
+
+        <section id="s8" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;08</span><span>Legal bases (EEA / UK)</span></h2>
+          <p class="legal-p">If you are in the European Economic Area or the United Kingdom, we process personal information under one or more of these bases:</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Consent &mdash; for non-essential cookies and optional marketing communications. You may withdraw consent at any time.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Contract &mdash; to respond to your requests and deliver services you ask for.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Legitimate interests &mdash; to run, secure, and improve our website and practice, balanced against your rights.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Legal obligation &mdash; to meet record-keeping, tax, and compliance duties.</span></li>
+          </ul>
+        </section>
+
+        <section id="s9" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;09</span><span>Advertising &amp; measurement</span></h2>
+          <p class="legal-p">Measurement is the core of what we do, and we hold our own data practices to the same standard. A tracked conversion is not a caused conversion &mdash; so wherever possible we favor privacy-respecting, consent-based measurement over indiscriminate tracking.</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>Server-side events &mdash; conversion data may be sent platform-to-platform via server APIs (e.g. Conversions API, Enhanced Conversions) rather than only through browser pixels.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Hashed identifiers &mdash; where identity is matched, identifiers such as email are hashed before transmission; we do not transmit raw identifiers for matching.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Aggregated &amp; modeled measurement &mdash; we use incrementality tests, geo-experiments, and modeled (aggregate) conversions in place of individual-level tracking where we can.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>No sale of personal information &mdash; we do not sell personal information for money, and we honor opt-outs of "sharing" for cross-context behavioral advertising as defined by applicable law.</span></li>
+          </ul>
+        </section>
+
+        <section id="s10" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;10</span><span>Client account access</span></h2>
+          <p class="legal-p">Clients can grant Fat Tail Ads access to their advertising, analytics, and business accounts (for example Google Ads, Google Analytics, Google Tag Manager, Google Search Console, Google Merchant Center, Google Business Profile, YouTube, Meta, LinkedIn, and Microsoft Advertising) through our client-access tool at fattailads.com/connect. You never share a password with us: you either accept an access request inside the platform itself, add our team as a user in the platform's own settings, or sign in with the platform and approve a specific, limited permission on the platform's own consent screen.</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>What we receive &mdash; the identifiers of the accounts you choose to share (such as an account or property ID), the access level you grant, your name, company, and contact email, and the date and status of each grant.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>How sign-in tokens are handled &mdash; when you approve a permission through a platform's sign-in screen, the resulting access token is used only during that session to create the access you approved, then discarded. We do not store your platform passwords or your sign-in tokens.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>What we keep &mdash; a record of the request and its status, so we can confirm access was granted and let you know if anything is incomplete.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Revoking access &mdash; you can remove Fat Tail Ads' access at any time from each platform's user, partner, or manager-link settings, or ask us to remove it via &sect;21.</span></li>
+          </ul>
+          <p class="legal-p muted">Credentials that Fat Tail Ads uses on its own behalf to confirm that access was granted are stored encrypted and are never shared.</p>
+        </section>
+
+        <section id="s11" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;11</span><span>Google user data</span></h2>
+          <p class="legal-p">When you sign in with Google to grant access, Fat Tail Ads requests only the specific permissions needed to add our team to the Google products you select (for example, managing users on a Google Analytics account or Google Tag Manager container). We use that access solely to create the user permission you approved and to confirm it succeeded.</p>
+          <p class="legal-p">Fat Tail Ads' use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>We do not use Google user data for advertising, and we do not sell it.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>We do not transfer Google user data to others except as necessary to provide the access you requested, to comply with law, or as part of a merger or acquisition with notice to you.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>We do not allow humans to read Google user data except with your consent, for security purposes, to comply with law, or when the data is aggregated and anonymized.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>We do not use Google user data to develop, improve, or train generalized AI or machine-learning models.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>You can revoke our app's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</span></li>
+          </ul>
+        </section>
+
+        <section id="s12" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;12</span><span>Meta data &amp; deletion</span></h2>
+          <p class="legal-p">When you share Meta assets (such as ad accounts, Pages, catalogs, datasets, or Instagram accounts) with the Fat Tail Ads business portfolio, Meta records that partner relationship; we receive the asset identifiers and the permissions you granted, and use them only to deliver our services.</p>
+          <h3 class="legal-sub">Requesting deletion</h3>
+          <p class="legal-p">To have us delete information we hold that was received from Meta, email privacy@fattailads.com with the subject "Data deletion request" and the name of your business or the account involved. We will confirm deletion within 30 days. To remove Fat Tail Ads' access to your Meta assets, open Meta Business Suite &rarr; Settings &rarr; Partners, select Fat Tail Ads, and remove it or the specific assets.</p>
+        </section>
+
+        <section id="s13" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;13</span><span>How we share information</span></h2>
+          <p class="legal-p">We share personal information only with the processors in &sect;06, with professional advisors and authorities where legally required, and in connection with a business transfer (such as a merger or acquisition). We do not sell your personal information.</p>
+        </section>
+
+        <section id="s14" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;14</span><span>Data retention</span></h2>
+          <p class="legal-p">We keep personal information only as long as needed for the purpose it was collected, then delete or anonymize it. Inquiry and CRM records are typically retained for the duration of any engagement plus a reasonable follow-up window; cookie lifespans are listed in &sect;04; legal, tax, and accounting records are kept for the periods the law requires.</p>
+        </section>
+
+        <section id="s15" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;15</span><span>Your privacy rights</span></h2>
+          <p class="legal-p">Depending on where you live, you may have the right to access, correct, delete, or port your personal information; to object to or restrict certain processing; to withdraw consent; and &mdash; under U.S. state laws such as the CCPA/CPRA &mdash; to opt out of the "sale" or "sharing" of personal information and to be free from discrimination for exercising these rights.</p>
+          <p class="legal-p">To make a request, contact us using &sect;21. We will verify your request and respond within the timeframe required by applicable law. You may use an authorized agent where the law permits. If you are in the EEA or UK, you also have the right to lodge a complaint with your local supervisory authority.</p>
+        </section>
+
+        <section id="s16" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;16</span><span>Do Not Track &amp; Global Privacy Control</span></h2>
+          <p class="legal-p">Some browsers send a "Do Not Track" signal; there is no common standard for how to respond, so we do not act on DNT. We do honor the Global Privacy Control (GPC) as a valid opt-out of "sale"/"sharing" where required by law. You can also set cookie categories directly in our preferences panel.</p>
+        </section>
+
+        <section id="s17" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;17</span><span>International transfers</span></h2>
+          <p class="legal-p">We are based in the United States, and information we process may be transferred to and stored in the U.S. or other countries. Where personal information is transferred out of the EEA or UK, we rely on appropriate safeguards such as the European Commission's Standard Contractual Clauses, together with supplementary measures where needed.</p>
+        </section>
+
+        <section id="s18" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;18</span><span>Children&rsquo;s privacy</span></h2>
+          <p class="legal-p">This website is intended for business audiences and is not directed to children under 16. We do not knowingly collect personal information from children. If you believe a child has provided us information, contact us and we will delete it.</p>
+        </section>
+
+        <section id="s19" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;19</span><span>Security</span></h2>
+          <p class="legal-p">We apply administrative, technical, and organizational safeguards appropriate to the sensitivity of the information we hold &mdash; including access controls, encryption in transit, and least-privilege access to client data. No method of transmission or storage is perfectly secure, so we cannot guarantee absolute security.</p>
+        </section>
+
+        <section id="s20" class="legal-section">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;20</span><span>Changes to this policy</span></h2>
+          <p class="legal-p">We may update this policy as our practices or the law change. Material changes will be reflected by the "Last updated" date above and, where appropriate, by a notice on the site. Continued use of the website after an update constitutes acceptance of the revised policy.</p>
+        </section>
+
+        <section id="s21" class="legal-section last">
+          <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;21</span><span>Contact</span></h2>
+          <p class="legal-p">For privacy questions or to exercise your rights, contact:</p>
+          <div class="contact-card">
+            <div class="contact-label">Fat Tail Ads, LLC &middot; Privacy</div>
+            <div class="contact-lines">
+              <a href="mailto:privacy@fattailads.com">privacy@fattailads.com</a><br>
+              <a href="tel:+19542285080">(954)&nbsp;228-5080</a><br>
+              Fort Lauderdale, FL &middot; USA
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="bot">
+  <div class="wrap">
+    <span class="foot-brand"><span id="fta-footer-monogram"></span>Fat&nbsp;Tail&nbsp;Ads</span>
+    <span class="foot-links">
+      <a class="top-link" href="/privacy">Privacy</a>
+      <a class="top-link" href="/terms">Terms</a>
+    </span>
+    <span class="muted">&copy; 2026 &middot; Performance Media Consultancy</span>
+  </div>
+</footer>
+
+<script>
+// Fat-tail logomark + curve — same geometry as the main site (src/1.jsx), rendered in vanilla JS.
+(function () {
+  function gaussianBodyPath(width, height, closed) {
+    var base = height - 10, peakY = 10, amp = base - peakY;
+    var bodyStart = width * 0.04, bodyEnd = width * 0.70, mu = width * 0.32, sigma = width * 0.09;
+    var step = (bodyEnd - bodyStart) / 60, pts = [];
+    for (var x = bodyStart; x <= bodyEnd + 0.001; x += step) {
+      var y = base - amp * Math.exp(-((x - mu) * (x - mu)) / (2 * sigma * sigma));
+      pts.push([x, y]);
+    }
+    var d = "M " + pts[0][0].toFixed(2) + " " + pts[0][1].toFixed(2);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      var c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += " C " + c1x.toFixed(2) + " " + c1y.toFixed(2) + ", " + c2x.toFixed(2) + " " + c2y.toFixed(2) + ", " + p2[0].toFixed(2) + " " + p2[1].toFixed(2);
+    }
+    if (closed) d += " L " + pts[pts.length - 1][0].toFixed(2) + " " + base + " L " + pts[0][0].toFixed(2) + " " + base + " Z";
+    return { d: d, tailStartX: pts[pts.length - 1][0], baseY: base };
+  }
+  function monogram(size) {
+    var W = 64, H = 58, body = gaussianBodyPath(W, H, false), fill = gaussianBodyPath(W, H, true), baseY = body.baseY;
+    var stroke = "#14120E", tail = "#C8502A", grid = "#D8D0BD";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 64 64" fill="none" style="flex:0 0 auto;display:block">'
+      + '<rect x="0.5" y="0.5" width="63" height="63" rx="2" stroke="' + stroke + '" stroke-width="1" fill="#FBF8F3"/>'
+      + '<line x1="5" y1="' + baseY + '" x2="59" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + stroke + '" fill-opacity="0.1"/>'
+      + '<path d="' + body.d + '" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + body.tailStartX.toFixed(2) + ' ' + baseY + ' C ' + (W * 0.82) + ' ' + baseY + ', ' + (W * 0.92) + ' ' + baseY + ', 59 ' + baseY + '" stroke="' + tail + '" stroke-width="2" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="59" cy="' + baseY + '" r="2" fill="' + tail + '"/></svg>';
+  }
+  function curve(width, height) {
+    var body = gaussianBodyPath(width, height, false), fill = gaussianBodyPath(width, height, true), baseY = body.baseY, tailStart = body.tailStartX;
+    var bd = "#14120E", tl = "#C8502A", grid = "#EAE4D6";
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" height="' + height + '" preserveAspectRatio="none" style="display:block">'
+      + '<line x1="0" y1="' + baseY + '" x2="' + width + '" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + bd + '" fill-opacity="0.08"/>'
+      + '<path d="' + body.d + '" stroke="' + bd + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + tailStart.toFixed(2) + ' ' + baseY + ' C ' + (width * 0.82) + ' ' + baseY + ', ' + (width * 0.92) + ' ' + baseY + ', ' + (width - 2) + ' ' + baseY + '" stroke="' + tl + '" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="' + (width - 2) + '" cy="' + baseY + '" r="2.5" fill="' + tl + '"/></svg>';
+  }
+  var m = document.getElementById('fta-monogram'); if (m) m.innerHTML = monogram(22);
+  var fm = document.getElementById('fta-footer-monogram'); if (fm) fm.innerHTML = monogram(20);
+  var c = document.getElementById('fta-curve'); if (c) c.innerHTML = curve(1160, 120);
+}());
+</script>
+</body></html>
