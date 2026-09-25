@@ -49,6 +49,14 @@ Legend: **Agency-side** = FTA's own credentials do the grant or send the invite;
 | *Phase 2 only:* Google sensitive-scope verification (analytics.manage.users, tagmanager.manage.users, content, business.manage) | One-click #2/3/5/6 | Brand verification 2–3 business days + review 3–10 business days. Check each scope's class on the project's **Data Access** page first; if any show restricted, drop it back to guided | $0 (no CASA for sensitive) |
 | *Not planned:* Meta App Review + BV + Access Verification (client-login Meta); LinkedIn Standard tier; Google restricted `adwords` | — | 2–6+ weeks each; annual Meta Data Use Checkup; CASA for restricted | CASA assessor fees |
 
+
+**Update 2026-09-25: scope classification settled.** The `fattailads-connect` project's Data Access page (Google's authoritative classifier) shows:
+- `business.manage` is **non-sensitive**.
+- `analytics.manage.users`, `tagmanager.manage.users`, `content` **and `adwords` are sensitive**.
+- **No restricted scopes, so no CASA** for any path.
+
+Consequence: one-click Google Ads is also viable. The client signs in, the app lists their customers (`ListAccessibleCustomers`), FTA's MCC sends the link, and the client's token sets the `CustomerManagerLink` to ACTIVE in the same session. Doing this needs Google Ads API access (Explorer) on the new project. It's added to Phase 2 as an option.
+
 ### Citations
 - **Google Ads:** [linking manager accounts](https://developers.google.com/google-ads/api/docs/account-management/linking-manager-accounts) · [access levels](https://developers.google.com/google-ads/api/docs/api-policy/access-levels) · [developer token retirement](https://developers.google.com/google-ads/api/docs/api-policy/developer-token) · [brand verification](https://developers.google.com/google-ads/api/docs/api-policy/brand-verification) · [security requirements / restricted scope](https://developers.google.com/google-ads/api/docs/oauth/security-requirements) · [link accept (Help)](https://support.google.com/google-ads/answer/7459601)
 - **GA4:** [accessBindings.create (v1alpha)](https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1alpha/accounts.accessBindings/create)
