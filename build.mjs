@@ -14,4 +14,9 @@ copyFileSync('meet.html', 'dist/meet/index.html');
 // Standalone, unlisted client-access page → served at /connect (dist/connect/index.html).
 mkdirSync('dist/connect', { recursive: true });
 copyFileSync('connect.html', 'dist/connect/index.html');
-console.log('build complete: dist/app.js + dist/index.html + dist/meet/index.html + dist/connect/index.html');
+// Standalone legal pages → /privacy and /terms (crawlable; linked from the site footer).
+mkdirSync('dist/privacy', { recursive: true });
+copyFileSync('privacy.html', 'dist/privacy/index.html');
+mkdirSync('dist/terms', { recursive: true });
+copyFileSync('terms.html', 'dist/terms/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,privacy,terms}/index.html');
