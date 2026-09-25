@@ -1,6 +1,13 @@
 {
   "name": "fattailads-site",
   "private": true,
-  "scripts": { "build": "node build.mjs" },
-  "devDependencies": { "esbuild": "0.28.1" }
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "1.1.0"
+  }
 }

@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Consent Mode v2 default — reads the same localStorage key the main site's banner writes -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  function mapConsent(r) {
+    function g(b) { return b ? 'granted' : 'denied'; }
+    return {
+      ad_storage: g(r && r.advertising),
+      ad_user_data: g(r && r.advertising),
+      ad_personalization: g(r && r.advertising),
+      analytics_storage: g(r && r.analytics),
+      functionality_storage: g(r && r.functional),
+      personalization_storage: g(r && r.functional),
+      security_storage: 'granted'
+    };
+  }
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('fta_cookie_consent') || 'null'); } catch (e) {}
+  var d = mapConsent(stored);
+  if (!stored) { d.wait_for_update = 500; }
+  gtag('consent', 'default', d);
+  window.addEventListener('fta:consent-updated', function (e) { gtag('consent', 'update', mapConsent(e.detail)); });
+})();
+</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KFF7DGR5');</script>
+<!-- End Google Tag Manager -->
+
+<title>Connect your accounts (beta) — Fat Tail Ads</title>
+<meta name="description" content="Securely connect your Google Analytics 4 and Google Tag Manager accounts to Fat Tail Ads — no passwords shared, revoke access anytime.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+<style>/* ============================================================
+   FAT TAIL ADS — Core tokens (mirrored from the main site)
+   ============================================================ */
+:root {
+  --paper-0:  #FBF8F3;
+  --paper-1:  #F5F1E8;
+  --paper-2:  #EAE4D6;
+  --paper-3:  #D8D0BD;
+
+  --ink-0:    #14120E;
+  --ink-1:    #2A2720;
+  --ink-2:    #5C564A;
+  --ink-3:    #8A8576;
+  --ink-4:    #B5AF9F;
+
+  --vermillion-50:  #FBEDE5;
+  --vermillion-100: #F5D4C2;
+  --vermillion-300: #E89169;
+  --vermillion-500: #C8502A;  /* brand primary */
+  --vermillion-700: #8E3516;
+  --vermillion-900: #4A1B0A;
+
+  --green-600: #2E7D4F;
+  --green-50:  #E7F3EC;
+  --amber-600: #B4790A;
+  --amber-50:  #FCF1DC;
+
+  --bg:        var(--paper-0);
+  --fg:        var(--ink-0);
+  --fg-body:   var(--ink-1);
+  --fg-muted:  var(--ink-2);
+  --fg-subtle: var(--ink-3);
+  --border:    var(--paper-3);
+  --accent:        var(--vermillion-500);
+  --accent-hover:  var(--vermillion-700);
+  --accent-soft:   var(--vermillion-50);
+
+  --font-display: "Fraunces", "Times New Roman", Georgia, serif;
+  --font-sans:    "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+
+  --t-mono-xs: 11px;
+  --t-base:    15px;
+  --t-lg:      20px;
+
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+
+  --lh-tight:  1.05;
+  --lh-snug:   1.2;
+  --lh-normal: 1.45;
+
+  --tr-tighter: -0.03em;
+  --tr-tight:   -0.01em;
+  --tr-wider:    0.12em;
+
+  --r-1: 2px;
+  --r-2: 4px;
+
+  --shadow-2: 0 2px 0 rgba(20,18,14,0.03), 0 4px 10px rgba(20,18,14,0.06);
+  --shadow-3: 0 8px 28px -12px rgba(20,18,14,0.22);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg-body);
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-normal);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+::selection { background: var(--vermillion-100); color: var(--ink-0); }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+
+/* ── Top bar ─────────────────────────────────────────── */
+header.top {
+  border-bottom: 0.5px solid var(--paper-3);
+  background: var(--paper-0);
+  position: sticky; top: 0; z-index: 10;
+}
+header.top .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-top: 18px; padding-bottom: 18px;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--ink-0); letter-spacing: -0.005em; text-transform: uppercase;
+  text-decoration: none;
+}
+.brand .tag {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-2);
+  font-weight: 500; letter-spacing: 0.14em; margin-left: 8px;
+  padding-left: 10px; border-left: 1px solid var(--paper-3);
+}
+.top-link {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+  letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+}
+.top-link:hover { color: var(--ink-0); }
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero { padding: clamp(44px, 8vw, 84px) 0 10px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: var(--t-mono-xs); font-weight: var(--w-medium);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--fg-muted);
+}
+.h1connect {
+  font-family: var(--font-display); font-weight: var(--w-medium);
+  font-size: clamp(40px, 9vw, 72px); letter-spacing: var(--tr-tighter);
+  line-height: 1.0; color: var(--ink-0); margin: 14px 0 18px;
+  font-variation-settings: "opsz" 120, "SOFT" 30;
+}
+.lede {
+  font-family: var(--font-display); font-style: italic; font-size: clamp(18px, 2.4vw, 23px);
+  line-height: var(--lh-normal); color: var(--fg-body); max-width: 52ch; margin: 0;
+  font-variation-settings: "opsz" 72;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.chip {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+  padding: 4px 9px; border-radius: var(--r-1); background: var(--paper-2); color: var(--ink-1);
+}
+.chip.tail { background: var(--vermillion-50); color: var(--vermillion-700); border: 1px solid var(--vermillion-100); }
+
+/* ── Curve divider ───────────────────────────────────── */
+.curve { margin: 30px 0 22px; }
+
+/* ── Connect card ────────────────────────────────────── */
+.card {
+  background: #fff; border: 1px solid var(--paper-3); border-radius: var(--r-2);
+  box-shadow: var(--shadow-2); overflow: hidden; position: relative;
+  padding: clamp(20px, 4vw, 36px);
+  margin-bottom: 72px;
+}
+
+/* ── Progress rail ───────────────────────────────────── */
+.progress-rail {
+  display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: clamp(20px, 4vw, 32px);
+  padding-bottom: 16px; border-bottom: 0.5px solid var(--paper-3);
+}
+.progress-rail .step { color: var(--ink-3); }
+.progress-rail .step.current { color: var(--vermillion-500); font-weight: var(--w-semi); }
+.progress-rail .step.done { color: var(--ink-1); }
+
+/* ── Form basics ─────────────────────────────────────── */
+.wizard-step { display: none; }
+.wizard-step.active { display: block; }
+
+.field { margin-bottom: 18px; }
+.field label {
+  display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px;
+}
+.field input[type="text"], .field input[type="email"] {
+  width: 100%; font-family: var(--font-sans); font-size: 15px; color: var(--ink-0);
+  background: var(--paper-0); border: 1px solid var(--paper-3); border-radius: var(--r-1);
+  padding: 11px 12px; line-height: 1.4;
+}
+.field input[type="text"]:focus, .field input[type="email"]:focus {
+  outline: 2px solid var(--vermillion-500); outline-offset: 1px; border-color: var(--vermillion-500);
+}
+.field .hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); margin-top: 6px; }
+
+.check-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 0;
+  border-bottom: 0.5px solid var(--paper-2);
+}
+.check-row:last-of-type { border-bottom: none; }
+.check-row input[type="checkbox"] {
+  margin-top: 3px; width: 16px; height: 16px; accent-color: var(--vermillion-500); flex: 0 0 auto;
+}
+.check-row label { font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-1); cursor: pointer; }
+.check-row label .sub { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 2px; text-transform: none; letter-spacing: 0; }
+
+fieldset.products { border: none; padding: 0; margin: 0 0 22px; }
+fieldset.products legend {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-2); padding: 0; margin-bottom: 4px;
+}
+
+button, .btn {
+  font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 14px;
+  border-radius: var(--r-1); border: 1px solid transparent; cursor: pointer;
+  padding: 12px 20px; letter-spacing: -0.005em; transition: background 0.15s, opacity 0.15s;
+}
+.btn-primary { background: var(--vermillion-500); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-secondary { background: transparent; color: var(--ink-1); border-color: var(--paper-3); }
+.btn-secondary:hover { background: var(--paper-1); }
+.btn-text {
+  background: none; border: none; color: var(--ink-3); font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 0;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-text:hover { color: var(--ink-0); }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--vermillion-500); outline-offset: 2px;
+}
+
+.actions { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ── Reassurance copy ────────────────────────────────── */
+.reassure {
+  font-family: var(--font-sans); font-size: 13.5px; color: var(--ink-2);
+  background: var(--paper-1); border: 1px solid var(--paper-2); border-radius: var(--r-1);
+  padding: 12px 14px; margin-bottom: 20px; line-height: 1.55;
+}
+
+/* ── Product rows (step 2) ───────────────────────────── */
+.product-list { border-top: 0.5px solid var(--paper-3); margin-bottom: 22px; }
+.product-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 16px 0; border-bottom: 0.5px solid var(--paper-3);
+}
+.product-row .pinfo .pname { font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 15px; color: var(--ink-0); }
+.product-row .pinfo .paccess { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.product-row .pright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.pill {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 20px; white-space: nowrap;
+}
+.pill.not-connected { background: var(--paper-2); color: var(--ink-2); }
+.pill.connected { background: var(--green-50); color: var(--green-600); }
+.pill.attention { background: var(--amber-50); color: var(--amber-600); }
+.pill.pending { background: var(--paper-2); color: var(--ink-2); }
+
+/* ── Account chooser (step 3) ────────────────────────── */
+.account-list { list-style: none; margin: 0 0 20px; padding: 0; border-top: 0.5px solid var(--paper-3); }
+.account-item { border-bottom: 0.5px solid var(--paper-3); }
+.account-item label {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; cursor: pointer;
+}
+.account-item input[type="radio"] { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--vermillion-500); flex: 0 0 auto; }
+.account-item .aname { display: block; font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 14.5px; color: var(--ink-0); }
+.account-item .adetail { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+
+.status-line {
+  font-family: var(--font-sans); font-size: 14.5px; padding: 12px 14px; border-radius: var(--r-1);
+  margin-bottom: 18px;
+}
+.status-line.working { background: var(--paper-1); color: var(--ink-2); }
+.status-line.success { background: var(--green-50); color: var(--green-600); }
+
+.error-box {
+  font-family: var(--font-sans); font-size: 14px; color: var(--vermillion-700);
+  background: var(--vermillion-50); border: 1px solid var(--vermillion-100);
+  border-radius: var(--r-1); padding: 12px 14px; margin-bottom: 18px; line-height: 1.5;
+}
+
+.done-list { list-style: none; margin: 18px 0 26px; padding: 0; }
+.done-list li {
+  font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-1);
+  padding: 10px 0; border-bottom: 0.5px solid var(--paper-2); display: flex; gap: 8px; align-items: baseline;
+}
+.done-list li .check { color: var(--green-600); font-weight: var(--w-semi); }
+
+.step-title {
+  font-family: var(--font-display); font-weight: var(--w-medium); font-size: clamp(22px, 3vw, 28px);
+  color: var(--ink-0); margin: 0 0 8px; letter-spacing: var(--tr-tight);
+  font-variation-settings: "opsz" 60;
+}
+.step-sub { font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-2); margin: 0 0 24px; max-width: 60ch; }
+
+.start-over-wrap { margin-top: 22px; text-align: right; }
+
+/* ── Footer ──────────────────────────────────────────── */
+footer.bot { border-top: 0.5px solid var(--paper-3); }
+footer.bot .wrap {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-top: 22px; padding-bottom: 18px;
+}
+.foot-brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans);
+  font-weight: 600; font-size: 12px; color: var(--ink-1); text-transform: uppercase; letter-spacing: -0.005em; }
+.muted { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.foot-links { padding: 0 0 30px; text-align: center; }
+.foot-links .wrap { justify-content: center; padding-top: 0; }
+.foot-links a { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); text-decoration: none; margin: 0 10px; }
+.foot-links a:hover { color: var(--ink-0); }
+
+@media (max-width: 700px) {
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; }
+  .brand .tag { display: none; }        /* hide tagline on mobile, like the main nav */
+  .hero { padding-top: 40px; }
+  .product-row { flex-direction: column; align-items: flex-start; }
+  .product-row .pright { width: 100%; justify-content: space-between; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .actions button, .actions .btn { width: 100%; text-align: center; }
+}
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KFF7DGR5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://fattailads.com/" aria-label="Fat Tail Ads home">
+      <span id="fta-monogram"></span>
+      Fat&nbsp;Tail&nbsp;Ads
+      <span class="tag">Performance&nbsp;Media&nbsp;Consultancy</span>
+    </a>
+    <a class="top-link" href="https://fattailads.com/">fattailads.com&nbsp;&#8599;</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Onboarding &middot; Beta</span>
+    <h1 class="h1connect">Connect your accounts.</h1>
+    <p class="lede">Grant Fat Tail Ads access to your Google Analytics 4 and Google Tag Manager accounts in a couple of minutes &mdash; right from your own Google sign-in, no passwords shared.</p>
+    <div class="chips">
+      <span class="chip">2 Minutes</span>
+      <span class="chip">No Passwords</span>
+      <span class="chip tail">Revoke Anytime</span>
+    </div>
+  </section>
+
+  <div class="curve" id="fta-curve" aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="progress-rail" id="progress-rail">
+      <span class="step" data-step="1">1 About you</span>
+      <span class="step" data-step="2">2 Connect</span>
+      <span class="step" data-step="3">3 Done</span>
+    </div>
+
+    <div id="aria-status" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);"></div>
+
+    <div id="global-error-slot"></div>
+
+    <!-- Step 1: About you -->
+    <section class="wizard-step" id="step-1" data-step="1">
+      <h2 class="step-title">About you</h2>
+      <p class="step-sub">Tell us who&rsquo;s connecting, then choose which accounts to share.</p>
+      <form id="form-about" novalidate>
+        <div class="field">
+          <label for="f-name">Your name</label>
+          <input type="text" id="f-name" name="name" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="f-company">Company</label>
+          <input type="text" id="f-company" name="company" required autocomplete="organization">
+        </div>
+        <div class="field">
+          <label for="f-email">Work email</label>
+          <input type="email" id="f-email" name="email" required autocomplete="email">
+        </div>
+
+        <fieldset class="products">
+          <legend>Accounts to connect</legend>
+          <div class="check-row">
+            <input type="checkbox" id="p-ga4" name="products" value="ga4" checked>
+            <label for="p-ga4">Google Analytics 4<span class="sub">Editor access</span></label>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="p-gtm" name="products" value="gtm" checked>
+            <label for="p-gtm">Google Tag Manager<span class="sub">User access with publish rights</span></label>
+          </div>
+        </fieldset>
+        <p class="field hint" id="products-error" style="display:none;color:var(--vermillion-700);">Choose at least one account to connect.</p>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary" id="btn-about-continue">Continue</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 2: Connect each product -->
+    <section class="wizard-step" id="step-2" data-step="2">
+      <h2 class="step-title">Connect your accounts</h2>
+      <p class="reassure">You&rsquo;ll sign in on Google&rsquo;s own page and approve one specific permission. We never see your password, and we don&rsquo;t keep your Google sign-in &mdash; it&rsquo;s used once to add our team, then discarded.</p>
+      <div id="product-list" class="product-list"></div>
+      <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-2">Start over</button></div>
+    </section>
+
+    <!-- Step 3: Choose account / grant -->
+    <section class="wizard-step" id="step-3" data-step="3">
+      <h2 class="step-title" id="choose-title">Choose an account</h2>
+      <p class="step-sub" id="choose-sub">Pick the account you&rsquo;d like Fat Tail Ads to access.</p>
+      <div id="choose-body"></div>
+      <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-3">Start over</button></div>
+    </section>
+
+    <!-- Step 4: All done -->
+    <section class="wizard-step" id="step-4" data-step="4">
+      <h2 class="step-title">You&rsquo;re all set.</h2>
+      <p class="step-sub">Fat Tail Ads has the access it needs &mdash; we&rsquo;ll take it from here.</p>
+      <ul class="done-list" id="done-list"></ul>
+      <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-4">Start over</button></div>
+    </section>
+  </div>
+</main>
+
+<footer class="bot">
+  <div class="wrap">
+    <span class="foot-brand"><span id="fta-footer-monogram"></span>Fat&nbsp;Tail&nbsp;Ads</span>
+    <span class="muted">&copy; 2026 &middot; Performance Media Consultancy</span>
+  </div>
+</footer>
+<div class="foot-links wrap">
+  <a href="https://fattailads.com/privacy">Privacy</a>
+  <a href="https://fattailads.com/terms">Terms</a>
+</div>
+
+<script>
+// Fat-tail logomark + curve — same geometry as the main site (src/1.jsx), rendered in vanilla JS.
+(function () {
+  function gaussianBodyPath(width, height, closed) {
+    var base = height - 10, peakY = 10, amp = base - peakY;
+    var bodyStart = width * 0.04, bodyEnd = width * 0.70, mu = width * 0.32, sigma = width * 0.09;
+    var step = (bodyEnd - bodyStart) / 60, pts = [];
+    for (var x = bodyStart; x <= bodyEnd + 0.001; x += step) {
+      var y = base - amp * Math.exp(-((x - mu) * (x - mu)) / (2 * sigma * sigma));
+      pts.push([x, y]);
+    }
+    var d = "M " + pts[0][0].toFixed(2) + " " + pts[0][1].toFixed(2);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      var c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += " C " + c1x.toFixed(2) + " " + c1y.toFixed(2) + ", " + c2x.toFixed(2) + " " + c2y.toFixed(2) + ", " + p2[0].toFixed(2) + " " + p2[1].toFixed(2);
+    }
+    if (closed) d += " L " + pts[pts.length - 1][0].toFixed(2) + " " + base + " L " + pts[0][0].toFixed(2) + " " + base + " Z";
+    return { d: d, tailStartX: pts[pts.length - 1][0], baseY: base };
+  }
+  function monogram(size) {
+    var W = 64, H = 58, body = gaussianBodyPath(W, H, false), fill = gaussianBodyPath(W, H, true), baseY = body.baseY;
+    var stroke = "#14120E", tail = "#C8502A", grid = "#D8D0BD";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 64 64" fill="none" style="flex:0 0 auto;display:block">'
+      + '<rect x="0.5" y="0.5" width="63" height="63" rx="2" stroke="' + stroke + '" stroke-width="1" fill="#FBF8F3"/>'
+      + '<line x1="5" y1="' + baseY + '" x2="59" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + stroke + '" fill-opacity="0.1"/>'
+      + '<path d="' + body.d + '" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + body.tailStartX.toFixed(2) + ' ' + baseY + ' C ' + (W * 0.82) + ' ' + baseY + ', ' + (W * 0.92) + ' ' + baseY + ', 59 ' + baseY + '" stroke="' + tail + '" stroke-width="2" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="59" cy="' + baseY + '" r="2" fill="' + tail + '"/></svg>';
+  }
+  function curve(width, height) {
+    var body = gaussianBodyPath(width, height, false), fill = gaussianBodyPath(width, height, true), baseY = body.baseY, tailStart = body.tailStartX;
+    var bd = "#14120E", tl = "#C8502A", grid = "#EAE4D6";
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" height="' + height + '" preserveAspectRatio="none" style="display:block">'
+      + '<line x1="0" y1="' + baseY + '" x2="' + width + '" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + bd + '" fill-opacity="0.08"/>'
+      + '<path d="' + body.d + '" stroke="' + bd + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + tailStart.toFixed(2) + ' ' + baseY + ' C ' + (width * 0.82) + ' ' + baseY + ', ' + (width * 0.92) + ' ' + baseY + ', ' + (width - 2) + ' ' + baseY + '" stroke="' + tl + '" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="' + (width - 2) + '" cy="' + baseY + '" r="2.5" fill="' + tl + '"/></svg>';
+  }
+  var m = document.getElementById('fta-monogram'); if (m) m.innerHTML = monogram(22);
+  var fm = document.getElementById('fta-footer-monogram'); if (fm) fm.innerHTML = monogram(20);
+  var c = document.getElementById('fta-curve'); if (c) c.innerHTML = curve(1160, 120);
+
+  // Measurement: mark that the connect page was viewed.
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: 'connect_page_view', page_type: 'onboarding_beta' });
+}());
+</script>
+
+<script>
+// ============================================================
+// FAT TAIL ADS — Connect (beta) wizard
+// ============================================================
+(function () {
+  'use strict';
+
+  var SESSION_KEY = 'fta_connect_req';
+  var PRODUCT_META = {
+    ga4: { name: 'Google Analytics 4', access: 'Editor access' },
+    gtm: { name: 'Google Tag Manager', access: 'User access with publish rights' }
+  };
+
+  var qs = new URLSearchParams(window.location.search);
+  var isTest = qs.get('test') === '1';
+
+  var ariaStatus = document.getElementById('aria-status');
+  function announce(msg) { if (ariaStatus) ariaStatus.textContent = msg; }
+
+  function getSession() {
+    try {
+      var raw = sessionStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function setSession(obj) {
+    try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(obj)); } catch (e) {}
+  }
+  function clearSession() {
+    try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+  }
+
+  function apiUrl(path) { return path; }
+
+  function fetchJson(url, opts) {
+    return fetch(url, opts).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (!res.ok) {
+          var err = new Error((body && body.message) || 'Something went wrong — please try again.');
+          err.code = body && body.error;
+          err.body = body;
+          throw err;
+        }
+        return body;
+      });
+    });
+  }
+
+  function friendlyMessage(err) {
+    if (err && err.message) return err.message;
+    return 'Something went wrong — please try again.';
+  }
+
+  function showGlobalError(html) {
+    var slot = document.getElementById('global-error-slot');
+    slot.innerHTML = '<div class="error-box">' + html + '</div>';
+  }
+  function clearGlobalError() {
+    document.getElementById('global-error-slot').innerHTML = '';
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function startUrl(requestId, product) {
+    return apiUrl('/api/connect/google/start?request=' + encodeURIComponent(requestId) + '&product=' + encodeURIComponent(product));
+  }
+
+  // ── Step visibility ──────────────────────────────────────
+  function showStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-step') === String(n));
+    });
+    var railStep = (n >= 4) ? 3 : n; // step 3 (choose account) and step 4 (done) both map to rail item 3? no — rail has 3 items: 1,2,3
+    document.querySelectorAll('#progress-rail .step').forEach(function (el) {
+      var s = el.getAttribute('data-step');
+      var current = (n === 1 && s === '1') || ((n === 2 || n === 3) && s === '2') || (n === 4 && s === '3');
+      var done = (n > 1 && s === '1') || (n > 3 && s === '2');
+      el.classList.toggle('current', current);
+      el.classList.toggle('done', done && !current);
+    });
+    announce('Step ' + n + ' of the connect wizard');
+  }
+
+  // ── Step 1: About you ──────────────────────────────────────
+  var aboutForm = document.getElementById('form-about');
+  var btnAboutContinue = document.getElementById('btn-about-continue');
+  var productsError = document.getElementById('products-error');
+
+  aboutForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearGlobalError();
+
+    var name = document.getElementById('f-name').value.trim();
+    var company = document.getElementById('f-company').value.trim();
+    var email = document.getElementById('f-email').value.trim();
+    var products = Array.prototype.slice.call(aboutForm.querySelectorAll('input[name="products"]:checked')).map(function (el) { return el.value; });
+
+    var valid = aboutForm.reportValidity();
+    if (!valid) return;
+
+    if (products.length === 0) {
+      productsError.style.display = 'block';
+      return;
+    }
+    productsError.style.display = 'none';
+
+    btnAboutContinue.disabled = true;
+    btnAboutContinue.textContent = 'Continuing…';
+
+    fetchJson(apiUrl('/api/connect/request'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, company: company, email: email, products: products, test: isTest })
+    }).then(function (data) {
+      var session = { requestId: data.requestId, products: products, name: name, company: company, test: isTest };
+      setSession(session);
+      showStep(2);
+      renderProductList();
+    }).catch(function (err) {
+      if (err.code === 'session_expired') {
+        // No prior session to expire at step 1, but handle gracefully anyway.
+        showGlobalError(escapeHtml(friendlyMessage(err)));
+      } else {
+        showGlobalError(escapeHtml(friendlyMessage(err)));
+      }
+    }).finally(function () {
+      btnAboutContinue.disabled = false;
+      btnAboutContinue.textContent = 'Continue';
+    });
+  });
+
+  // ── Step 2: Connect each product ───────────────────────────
+  var productListEl = document.getElementById('product-list');
+
+  function pillClass(status) {
+    if (status === 'verified' || status === 'already_had_access') return 'pill connected';
+    if (status === 'failed') return 'pill attention';
+    if (status === 'pending') return 'pill pending';
+    return 'pill not-connected';
+  }
+  function pillLabel(status) {
+    if (status === 'verified' || status === 'already_had_access') return 'Connected ✓';
+    if (status === 'failed') return 'Needs attention';
+    if (status === 'pending') return 'Pending';
+    return 'Not connected';
+  }
+
+  function renderProductList() {
+    var session = getSession();
+    if (!session) { showStep(1); return; }
+    var products = session.products || [];
+
+    // Render skeleton first with "Not connected" status, then refresh from the API.
+    productListEl.innerHTML = products.map(function (p) {
+      var meta = PRODUCT_META[p] || { name: p, access: '' };
+      return '' +
+        '<div class="product-row" data-product="' + p + '">' +
+          '<div class="pinfo">' +
+            '<div class="pname">' + escapeHtml(meta.name) + '</div>' +
+            '<div class="paccess">' + escapeHtml(meta.access) + '</div>' +
+          '</div>' +
+          '<div class="pright">' +
+            '<span class="pill not-connected" data-role="pill">Not connected</span>' +
+            '<button type="button" class="btn-secondary" data-role="connect-btn">Continue with Google</button>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+
+    productListEl.querySelectorAll('[data-role="connect-btn"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var product = btn.closest('.product-row').getAttribute('data-product');
+        btn.disabled = true;
+        window.location.href = startUrl(session.requestId, product);
+      });
+    });
+
+    refreshStatus();
+  }
+
+  function refreshStatus() {
+    var session = getSession();
+    if (!session) return;
+    clearGlobalError();
+    fetchJson(apiUrl('/api/connect/status?request=' + encodeURIComponent(session.requestId)))
+      .then(function (data) {
+        var items = data.items || [];
+        items.forEach(function (item) {
+          var row = productListEl.querySelector('.product-row[data-product="' + item.product + '"]');
+          if (!row) return;
+          var pill = row.querySelector('[data-role="pill"]');
+          var btn = row.querySelector('[data-role="connect-btn"]');
+          if (pill) {
+            pill.className = pillClass(item.status);
+            pill.textContent = pillLabel(item.status);
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = (item.status === 'verified' || item.status === 'already_had_access') ? 'Reconnect' : 'Continue with Google';
+          }
+        });
+        if (data.complete) {
+          renderDone(items);
+          showStep(4);
+        }
+      })
+      .catch(function (err) {
+        if (err.code === 'session_expired') {
+          handleSessionExpired(null);
+        } else {
+          showGlobalError(escapeHtml(friendlyMessage(err)));
+        }
+      });
+  }
+
+  document.getElementById('btn-start-over-2').addEventListener('click', startOver);
+  document.getElementById('btn-start-over-3').addEventListener('click', startOver);
+  document.getElementById('btn-start-over-4').addEventListener('click', startOver);
+
+  function startOver() {
+    clearSession();
+    window.location.href = cleanBetaUrl();
+  }
+
+  function cleanBetaUrl(extraQuery) {
+    var base = window.location.pathname.replace(/\/?$/, '/');
+    var params = [];
+    var session = getSession();
+    if (extraQuery) {
+      Object.keys(extraQuery).forEach(function (k) { params.push(k + '=' + encodeURIComponent(extraQuery[k])); });
+    }
+    if (session && session.test) params.push('test=1');
+    return base + (params.length ? '?' + params.join('&') : '');
+  }
+
+  // ── Step 3: Choose account / grant ─────────────────────────
+  var chooseBody = document.getElementById('choose-body');
+  var chooseTitle = document.getElementById('choose-title');
+  var chooseSub = document.getElementById('choose-sub');
+
+  function handleSessionExpired(product) {
+    var session = getSession();
+    var reqId = session && session.requestId;
+    var url = (reqId && product) ? startUrl(reqId, product) : null;
+    var btnHtml = url
+      ? '<div class="actions" style="margin-top:10px;"><button type="button" class="btn-primary" id="btn-reauth">Sign in with Google again</button></div>'
+      : '';
+    showGlobalError('Your session has expired. Please sign in again.' + btnHtml);
+    var reauth = document.getElementById('btn-reauth');
+    if (reauth) reauth.addEventListener('click', function () { window.location.href = url; });
+  }
+
+  function renderChooseAccount(requestId, product) {
+    chooseTitle.textContent = 'Choose an account';
+    var meta = PRODUCT_META[product] || { name: product };
+    chooseSub.textContent = 'Pick the ' + meta.name + ' account you’d like Fat Tail Ads to access.';
+    chooseBody.innerHTML = '<p class="step-sub">Loading your accounts…</p>';
+
+    fetchJson(apiUrl('/api/connect/google/accounts?request=' + encodeURIComponent(requestId) + '&product=' + encodeURIComponent(product)))
+      .then(function (data) {
+        var accounts = data.accounts || [];
+        if (accounts.length === 0) {
+          chooseBody.innerHTML = '<div class="error-box">No accounts were found for this Google sign-in.</div>';
+          return;
+        }
+        var listHtml = '<ul class="account-list">' + accounts.map(function (a, i) {
+          var checked = (accounts.length === 1 || i === 0 && accounts.length === 1) ? '' : '';
+          return '' +
+            '<li class="account-item">' +
+              '<label>' +
+                '<input type="radio" name="account" value="' + escapeHtml(a.id) + '"' + (accounts.length === 1 ? ' checked' : '') + '>' +
+                '<span>' +
+                  '<span class="aname">' + escapeHtml(a.name) + '</span>' +
+                  '<span class="adetail">' + escapeHtml(a.detail || '') + ' &middot; <code>' + escapeHtml(a.id) + '</code></span>' +
+                '</span>' +
+              '</label>' +
+            '</li>';
+        }).join('') + '</ul>';
+
+        chooseBody.innerHTML = listHtml +
+          '<div id="choose-status-slot"></div>' +
+          '<div class="actions">' +
+            '<button type="button" class="btn-primary" id="btn-grant">Grant access</button>' +
+          '</div>';
+
+        document.getElementById('btn-grant').addEventListener('click', function () {
+          var selected = chooseBody.querySelector('input[name="account"]:checked');
+          if (!selected) {
+            document.getElementById('choose-status-slot').innerHTML = '<div class="error-box">Choose an account first.</div>';
+            return;
+          }
+          doGrant(requestId, product, selected.value);
+        });
+      })
+      .catch(function (err) {
+        if (err.code === 'session_expired') {
+          handleSessionExpired(product);
+        } else {
+          chooseBody.innerHTML = '';
+          showGlobalError(escapeHtml(friendlyMessage(err)));
+        }
+      });
+  }
+
+  function doGrant(requestId, product, accountId) {
+    var statusSlot = document.getElementById('choose-status-slot');
+    var grantBtn = document.getElementById('btn-grant');
+    if (grantBtn) grantBtn.disabled = true;
+    statusSlot.innerHTML = '<div class="status-line working">Adding Fat Tail Ads…</div>';
+    announce('Adding Fat Tail Ads, please wait.');
+
+    fetchJson(apiUrl('/api/connect/google/grant'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request: requestId, product: product, accountId: accountId })
+    }).then(function (data) {
+      if (data.status === 'verified' || data.status === 'already_had_access') {
+        var line = data.status === 'verified'
+          ? 'Done — Fat Tail Ads now has ' + (PRODUCT_META[product] ? PRODUCT_META[product].access : 'access') + ' to ' + escapeHtml(data.assetName) + '.'
+          : 'Fat Tail Ads already had access to ' + escapeHtml(data.assetName) + ' — nothing to change.';
+        statusSlot.innerHTML = '<div class="status-line success">' + line + '</div>' +
+          '<div class="actions"><button type="button" class="btn-primary" id="btn-back-checklist">Back to your checklist</button></div>';
+        document.getElementById('btn-back-checklist').addEventListener('click', function () {
+          history.replaceState(null, '', cleanBetaUrl());
+          showStep(2);
+          renderProductList();
+        });
+      } else if (data.status === 'failed') {
+        statusSlot.innerHTML = '<div class="error-box">' + escapeHtml(data.detail || 'We couldn’t grant access. Please try again.') + '</div>' +
+          '<div class="actions">' +
+            '<button type="button" class="btn-primary" id="btn-try-again">Try again</button>' +
+            '<button type="button" class="btn-secondary" id="btn-choose-different">Choose a different account</button>' +
+          '</div>';
+        document.getElementById('btn-try-again').addEventListener('click', function () { doGrant(requestId, product, accountId); });
+        document.getElementById('btn-choose-different').addEventListener('click', function () { renderChooseAccount(requestId, product); });
+      } else {
+        // pending or unknown — show working state and re-render choose so status.
+        statusSlot.innerHTML = '<div class="status-line working">Still working…</div>';
+      }
+    }).catch(function (err) {
+      if (err.code === 'session_expired') {
+        handleSessionExpired(product);
+      } else {
+        statusSlot.innerHTML = '<div class="error-box">' + escapeHtml(friendlyMessage(err)) + '</div>' +
+          '<div class="actions">' +
+            '<button type="button" class="btn-primary" id="btn-try-again">Try again</button>' +
+            '<button type="button" class="btn-secondary" id="btn-choose-different">Choose a different account</button>' +
+          '</div>';
+        var t = document.getElementById('btn-try-again'); if (t) t.addEventListener('click', function () { doGrant(requestId, product, accountId); });
+        var c = document.getElementById('btn-choose-different'); if (c) c.addEventListener('click', function () { renderChooseAccount(requestId, product); });
+      }
+    }).finally(function () {
+      if (grantBtn) grantBtn.disabled = false;
+    });
+  }
+
+  // ── Step 4: All done ────────────────────────────────────────
+  var doneEventPushed = false;
+  function renderDone(items) {
+    var list = document.getElementById('done-list');
+    list.innerHTML = (items || []).filter(function (item) {
+      return item.status === 'verified' || item.status === 'already_had_access';
+    }).map(function (item) {
+      var meta = PRODUCT_META[item.product] || { name: item.product };
+      return '<li><span class="check">✓</span> ' + escapeHtml(meta.name) + (item.assetName ? ' — ' + escapeHtml(item.assetName) : '') + '</li>';
+    }).join('');
+
+    if (!doneEventPushed) {
+      doneEventPushed = true;
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({ event: 'connect_complete_view', page_type: 'onboarding_beta' });
+    }
+  }
+
+  // ── Error param handling (OAuth redirect failures) ──────────
+  function handleErrorParam(code) {
+    var msg = code === 'access_denied'
+      ? 'Google sign-in was cancelled. You can try again whenever you’re ready.'
+      : 'We couldn’t complete the Google sign-in. Please try again.';
+    showGlobalError(escapeHtml(msg));
+  }
+
+  // ── Routing on load ──────────────────────────────────────────
+  function init() {
+    var step = qs.get('step');
+    var requestParam = qs.get('request');
+    var productParam = qs.get('product');
+    var errorParam = qs.get('error');
+
+    if (step === 'choose' && requestParam && productParam) {
+      var session = getSession() || {};
+      session.requestId = requestParam;
+      if (isTest) session.test = true;
+      setSession(session);
+      showStep(3);
+      renderChooseAccount(requestParam, productParam);
+      return;
+    }
+
+    if (errorParam) {
+      showStep(2);
+      var s = getSession();
+      if (s) { renderProductList(); } else { productListEl.innerHTML = ''; }
+      handleErrorParam(errorParam);
+      return;
+    }
+
+    var existing = getSession();
+    if (existing && existing.requestId) {
+      showStep(2);
+      renderProductList();
+      return;
+    }
+
+    showStep(1);
+  }
+
+  init();
+}());
+</script>
+</body></html>
