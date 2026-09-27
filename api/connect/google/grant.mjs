@@ -32,6 +32,9 @@ export default async function handler(req, res) {
     const accounts = await listAccounts(product, token);
     const account = accounts.find((a) => a.id === accountId);
     if (!account) return sendError(res, 400, 'invalid_account', 'That account is not available to the Google account you signed in with.');
+    if (!account.canGrant) {
+      return sendJson(res, { status: 'failed', assetName: account.name, detail: `Your Google account isn't an administrator of ${account.name}, so it can't add users there. An administrator of the account needs to complete this step.` });
+    }
 
     const result = await grantAndVerify(product, token, accountId);
     const ok = result.status === 'verified' || result.status === 'already_had_access';

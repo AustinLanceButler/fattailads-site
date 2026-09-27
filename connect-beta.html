@@ -240,6 +240,7 @@ button, .btn {
 .btn-primary { background: var(--vermillion-500); color: #fff; }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.tick-tip { margin: 10px 0 18px; padding: 10px 14px; border-left: 3px solid var(--vermillion-500); background: var(--vermillion-50); color: var(--ink-1); font-size: 14px; line-height: 1.55; }
 .btn-secondary { background: transparent; color: var(--ink-1); border-color: var(--paper-3); }
 .btn-secondary:hover { background: var(--paper-1); }
 .btn-text {
@@ -289,6 +290,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .account-item input[type="radio"] { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--vermillion-500); flex: 0 0 auto; }
 .account-item .aname { display: block; font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 14.5px; color: var(--ink-0); }
 .account-item .adetail { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.account-item.blocked { opacity: 0.5; }
+.account-item.blocked label { cursor: not-allowed; }
 
 .status-line {
   font-family: var(--font-sans); font-size: 14.5px; padding: 12px 14px; border-radius: var(--r-1);
@@ -424,7 +427,8 @@ footer.bot .wrap {
     <!-- Step 2: Connect each product -->
     <section class="wizard-step" id="step-2" data-step="2">
       <h2 class="step-title">Connect your accounts</h2>
-      <p class="reassure">You&rsquo;ll sign in on Google&rsquo;s own page and approve one specific permission. We never see your password, and we don&rsquo;t keep your Google sign-in &mdash; it&rsquo;s used once to add our team, then discarded.</p>
+      <p class="reassure">You&rsquo;ll sign in on Google&rsquo;s own page and approve two specific permissions. We never see your password, and we don&rsquo;t keep your Google sign-in &mdash; it&rsquo;s used once to add our team, then discarded.</p>
+      <p class="tick-tip"><strong>On Google&rsquo;s screen, tick both boxes</strong> (or &ldquo;Select all&rdquo;) before you press Continue &mdash; Google leaves them unticked, and we need both to add our team. Sign in with a Google account that&rsquo;s an <strong>Administrator</strong> on the account you&rsquo;re connecting.</p>
       <div id="product-list" class="product-list"></div>
       <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-2">Start over</button></div>
     </section>
@@ -778,19 +782,26 @@ footer.bot .wrap {
           chooseBody.innerHTML = '<div class="error-box">No accounts were found for this Google sign-in.</div>';
           return;
         }
-        var listHtml = '<ul class="account-list">' + accounts.map(function (a, i) {
-          var checked = (accounts.length === 1 || i === 0 && accounts.length === 1) ? '' : '';
+        // canGrant === false → this Google user isn't an administrator there (API sorts those last).
+        var grantable = accounts.filter(function (a) { return a.canGrant !== false; });
+        var listHtml = '<ul class="account-list">' + accounts.map(function (a) {
+          var blocked = a.canGrant === false;
+          var preselect = !blocked && grantable.length === 1;
           return '' +
-            '<li class="account-item">' +
+            '<li class="account-item' + (blocked ? ' blocked' : '') + '">' +
               '<label>' +
-                '<input type="radio" name="account" value="' + escapeHtml(a.id) + '"' + (accounts.length === 1 ? ' checked' : '') + '>' +
+                '<input type="radio" name="account" value="' + escapeHtml(a.id) + '"' + (preselect ? ' checked' : '') + (blocked ? ' disabled' : '') + '>' +
                 '<span>' +
                   '<span class="aname">' + escapeHtml(a.name) + '</span>' +
-                  '<span class="adetail">' + escapeHtml(a.detail || '') + ' &middot; <code>' + escapeHtml(a.id) + '</code></span>' +
+                  '<span class="adetail">' + escapeHtml(a.detail || '') + ' &middot; <code>' + escapeHtml(a.id) + '</code>' +
+                    (blocked ? ' &middot; you&rsquo;re not an administrator here' : '') + '</span>' +
                 '</span>' +
               '</label>' +
             '</li>';
         }).join('') + '</ul>';
+        if (!grantable.length) {
+          listHtml = '<div class="error-box">This Google sign-in isn&rsquo;t an administrator on any of these accounts, so it can&rsquo;t add users. Ask an administrator of the account to complete this step, or sign in with a different Google account.</div>' + listHtml;
+        }
 
         chooseBody.innerHTML = listHtml +
           '<div id="choose-status-slot"></div>' +
@@ -891,7 +902,9 @@ footer.bot .wrap {
   function handleErrorParam(code) {
     var msg = code === 'access_denied'
       ? 'Google sign-in was cancelled. You can try again whenever you’re ready.'
-      : 'We couldn’t complete the Google sign-in. Please try again.';
+      : code === 'scope_missing'
+        ? 'Google didn’t pass along the permission we need. Please try again and tick both boxes (or “Select all”) on Google’s screen.'
+        : 'We couldn’t complete the Google sign-in. Please try again.';
     showGlobalError(escapeHtml(msg));
   }
 
