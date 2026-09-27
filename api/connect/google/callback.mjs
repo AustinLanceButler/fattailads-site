@@ -2,6 +2,7 @@
 // 1. The state must match the browser's cookie AND an unused, <10-minute-old row,
 //    which is consumed atomically (single use).
 // 2. The code is exchanged with the PKCE verifier. access_type=online → no refresh token.
+// (Admin sign-in rows, product 'admin', branch off after step 2 — see below.)
 // 3. The access token is sealed (AES-GCM, bound to request+product) into a
 //    15-minute HttpOnly cookie — never written to the database — and the browser
 //    returns to the wizard to pick an account.
@@ -9,15 +10,17 @@
 import { db, audit } from '../../_lib/db.mjs';
 import { allowMethods, baseUrl, clearCookie, setCookie } from '../../_lib/http.mjs';
 import { safeEqual, seal, sha256Base64Url } from '../../_lib/crypto.mjs';
-import { PRODUCTS, exchangeCode } from '../../_lib/google.mjs';
+import { PRODUCTS, exchangeCode, fetchVerifiedEmail, revokeToken } from '../../_lib/google.mjs';
+import { adminEmails, startAdminSession } from '../../_lib/admin-session.mjs';
 import { COOKIE_PATH, STATE_COOKIE, TOKEN_COOKIE, tokenAad } from '../../_lib/google-session.mjs';
 
 const WIZARD = '/connect/beta/';
+const ADMIN = '/connect/admin/';
 
-function back(res, params) {
+function back(res, params, page = WIZARD) {
   res.setHeader('Cache-Control', 'no-store');
   res.statusCode = 302;
-  res.setHeader('Location', `${WIZARD}?${new URLSearchParams(params)}`);
+  res.setHeader('Location', `${page}?${new URLSearchParams(params)}`);
   return res.end();
 }
 
@@ -44,6 +47,19 @@ export default async function handler(req, res) {
       redirectUri: `${baseUrl(req)}/api/connect/google/callback`,
       codeVerifier: row.code_verifier,
     });
+
+    // Admin dashboard sign-in: identity only, token revoked immediately.
+    if (row.product === 'admin') {
+      const email = await fetchVerifiedEmail(tok.accessToken);
+      await revokeToken(tok.accessToken);
+      if (!email || !adminEmails().includes(email)) {
+        await audit(null, 'admin_login_denied', { email });
+        return back(res, { error: 'not_allowed' }, ADMIN);
+      }
+      startAdminSession(res, email);
+      await audit(null, 'admin_login', { email });
+      return back(res, {}, ADMIN);
+    }
 
     // Granular consent lets people untick scopes; the user-management scope is the one we need.
     const granted = tok.scope.split(' ');

@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Consent Mode v2 default — reads the same localStorage key the main site's banner writes -->
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+(function () {
+  function mapConsent(r) {
+    function g(b) { return b ? 'granted' : 'denied'; }
+    return {
+      ad_storage: g(r && r.advertising),
+      ad_user_data: g(r && r.advertising),
+      ad_personalization: g(r && r.advertising),
+      analytics_storage: g(r && r.analytics),
+      functionality_storage: g(r && r.functional),
+      personalization_storage: g(r && r.functional),
+      security_storage: 'granted'
+    };
+  }
+  var stored = null;
+  try { stored = JSON.parse(localStorage.getItem('fta_cookie_consent') || 'null'); } catch (e) {}
+  var d = mapConsent(stored);
+  if (!stored) { d.wait_for_update = 500; }
+  gtag('consent', 'default', d);
+  window.addEventListener('fta:consent-updated', function (e) { gtag('consent', 'update', mapConsent(e.detail)); });
+})();
+</script>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KFF7DGR5');</script>
+<!-- End Google Tag Manager -->
+
+<title>Connect your accounts — Fat Tail Ads</title>
+<meta name="description" content="Give Fat Tail Ads access to your Google, Microsoft, Meta and LinkedIn accounts — no passwords shared, revoke access anytime.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Inter+Tight:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
+
+<style>/* ============================================================
+   FAT TAIL ADS — Core tokens (mirrored from the main site)
+   ============================================================ */
+:root {
+  --paper-0:  #FBF8F3;
+  --paper-1:  #F5F1E8;
+  --paper-2:  #EAE4D6;
+  --paper-3:  #D8D0BD;
+
+  --ink-0:    #14120E;
+  --ink-1:    #2A2720;
+  --ink-2:    #5C564A;
+  --ink-3:    #8A8576;
+  --ink-4:    #B5AF9F;
+
+  --vermillion-50:  #FBEDE5;
+  --vermillion-100: #F5D4C2;
+  --vermillion-300: #E89169;
+  --vermillion-500: #C8502A;  /* brand primary */
+  --vermillion-700: #8E3516;
+  --vermillion-900: #4A1B0A;
+
+  --green-600: #2E7D4F;
+  --green-50:  #E7F3EC;
+  --amber-600: #B4790A;
+  --amber-50:  #FCF1DC;
+
+  --bg:        var(--paper-0);
+  --fg:        var(--ink-0);
+  --fg-body:   var(--ink-1);
+  --fg-muted:  var(--ink-2);
+  --fg-subtle: var(--ink-3);
+  --border:    var(--paper-3);
+  --accent:        var(--vermillion-500);
+  --accent-hover:  var(--vermillion-700);
+  --accent-soft:   var(--vermillion-50);
+
+  --font-display: "Fraunces", "Times New Roman", Georgia, serif;
+  --font-sans:    "Inter Tight", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+
+  --t-mono-xs: 11px;
+  --t-base:    15px;
+  --t-lg:      20px;
+
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-semi:    600;
+
+  --lh-tight:  1.05;
+  --lh-snug:   1.2;
+  --lh-normal: 1.45;
+
+  --tr-tighter: -0.03em;
+  --tr-tight:   -0.01em;
+  --tr-wider:    0.12em;
+
+  --r-1: 2px;
+  --r-2: 4px;
+
+  --shadow-2: 0 2px 0 rgba(20,18,14,0.03), 0 4px 10px rgba(20,18,14,0.06);
+  --shadow-3: 0 8px 28px -12px rgba(20,18,14,0.22);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg-body);
+  font-family: var(--font-sans);
+  font-size: var(--t-base);
+  line-height: var(--lh-normal);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { color: inherit; }
+::selection { background: var(--vermillion-100); color: var(--ink-0); }
+
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 48px); }
+
+/* ── Top bar ─────────────────────────────────────────── */
+header.top {
+  border-bottom: 0.5px solid var(--paper-3);
+  background: var(--paper-0);
+  position: sticky; top: 0; z-index: 10;
+}
+header.top .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-top: 18px; padding-bottom: 18px;
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-sans); font-weight: 600; font-size: 13px;
+  color: var(--ink-0); letter-spacing: -0.005em; text-transform: uppercase;
+  text-decoration: none;
+}
+.brand .tag {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-2);
+  font-weight: 500; letter-spacing: 0.14em; margin-left: 8px;
+  padding-left: 10px; border-left: 1px solid var(--paper-3);
+}
+.top-link {
+  font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
+  letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none;
+}
+.top-link:hover { color: var(--ink-0); }
+
+/* ── Hero ────────────────────────────────────────────── */
+.hero { padding: clamp(44px, 8vw, 84px) 0 10px; }
+.eyebrow {
+  font-family: var(--font-mono); font-size: var(--t-mono-xs); font-weight: var(--w-medium);
+  letter-spacing: var(--tr-wider); text-transform: uppercase; color: var(--fg-muted);
+}
+.h1connect {
+  font-family: var(--font-display); font-weight: var(--w-medium);
+  font-size: clamp(40px, 9vw, 72px); letter-spacing: var(--tr-tighter);
+  line-height: 1.0; color: var(--ink-0); margin: 14px 0 18px;
+  font-variation-settings: "opsz" 120, "SOFT" 30;
+}
+.lede {
+  font-family: var(--font-display); font-style: italic; font-size: clamp(18px, 2.4vw, 23px);
+  line-height: var(--lh-normal); color: var(--fg-body); max-width: 52ch; margin: 0;
+  font-variation-settings: "opsz" 72;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.chip {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em;
+  padding: 4px 9px; border-radius: var(--r-1); background: var(--paper-2); color: var(--ink-1);
+}
+.chip.tail { background: var(--vermillion-50); color: var(--vermillion-700); border: 1px solid var(--vermillion-100); }
+
+/* ── Curve divider ───────────────────────────────────── */
+.curve { margin: 30px 0 22px; }
+
+/* ── Connect card ────────────────────────────────────── */
+.card {
+  background: #fff; border: 1px solid var(--paper-3); border-radius: var(--r-2);
+  box-shadow: var(--shadow-2); overflow: hidden; position: relative;
+  padding: clamp(20px, 4vw, 36px);
+  margin-bottom: 72px;
+}
+
+/* ── Progress rail ───────────────────────────────────── */
+.progress-rail {
+  display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: clamp(20px, 4vw, 32px);
+  padding-bottom: 16px; border-bottom: 0.5px solid var(--paper-3);
+}
+.progress-rail .step { color: var(--ink-3); }
+.progress-rail .step.current { color: var(--vermillion-500); font-weight: var(--w-semi); }
+.progress-rail .step.done { color: var(--ink-1); }
+
+/* ── Form basics ─────────────────────────────────────── */
+.wizard-step { display: none; }
+.wizard-step.active { display: block; }
+
+.field { margin-bottom: 18px; }
+.field label {
+  display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px;
+}
+.field input[type="text"], .field input[type="email"] {
+  width: 100%; font-family: var(--font-sans); font-size: 15px; color: var(--ink-0);
+  background: var(--paper-0); border: 1px solid var(--paper-3); border-radius: var(--r-1);
+  padding: 11px 12px; line-height: 1.4;
+}
+.field input[type="text"]:focus, .field input[type="email"]:focus {
+  outline: 2px solid var(--vermillion-500); outline-offset: 1px; border-color: var(--vermillion-500);
+}
+.field .hint { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-3); margin-top: 6px; }
+
+.check-row {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 0;
+  border-bottom: 0.5px solid var(--paper-2);
+}
+.check-row:last-of-type { border-bottom: none; }
+.check-row input[type="checkbox"] {
+  margin-top: 3px; width: 16px; height: 16px; accent-color: var(--vermillion-500); flex: 0 0 auto;
+}
+.check-row label { font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-1); cursor: pointer; }
+.check-row label .sub { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 2px; text-transform: none; letter-spacing: 0; }
+
+fieldset.products { border: none; padding: 0; margin: 0 0 22px; }
+fieldset.products legend {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-2); padding: 0; margin-bottom: 4px;
+}
+
+button, .btn {
+  font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 14px;
+  border-radius: var(--r-1); border: 1px solid transparent; cursor: pointer;
+  padding: 12px 20px; letter-spacing: -0.005em; transition: background 0.15s, opacity 0.15s;
+}
+.btn-primary { background: var(--vermillion-500); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.tick-tip { margin: 10px 0 18px; padding: 10px 14px; border-left: 3px solid var(--vermillion-500); background: var(--vermillion-50); color: var(--ink-1); font-size: 14px; line-height: 1.55; }
+.btn-secondary { background: transparent; color: var(--ink-1); border-color: var(--paper-3); }
+.btn-secondary:hover { background: var(--paper-1); }
+.btn-text {
+  background: none; border: none; color: var(--ink-3); font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 0;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-text:hover { color: var(--ink-0); }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--vermillion-500); outline-offset: 2px;
+}
+
+.actions { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+
+/* ── Reassurance copy ────────────────────────────────── */
+.reassure {
+  font-family: var(--font-sans); font-size: 13.5px; color: var(--ink-2);
+  background: var(--paper-1); border: 1px solid var(--paper-2); border-radius: var(--r-1);
+  padding: 12px 14px; margin-bottom: 20px; line-height: 1.55;
+}
+
+/* ── Product rows (step 2) ───────────────────────────── */
+.product-list { border-top: 0.5px solid var(--paper-3); margin-bottom: 22px; }
+.product-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 16px 0; border-bottom: 0.5px solid var(--paper-3);
+}
+.product-row .pinfo .pname { font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 15px; color: var(--ink-0); }
+.product-row .pinfo .paccess { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.product-row .pright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.pill {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 9px; border-radius: 20px; white-space: nowrap;
+}
+.pill.not-connected { background: var(--paper-2); color: var(--ink-2); }
+.pill.connected { background: var(--green-50); color: var(--green-600); }
+.pill.attention { background: var(--amber-50); color: var(--amber-600); }
+.pill.pending { background: var(--paper-2); color: var(--ink-2); }
+
+/* ── Account chooser (step 3) ────────────────────────── */
+.account-list { list-style: none; margin: 0 0 20px; padding: 0; border-top: 0.5px solid var(--paper-3); }
+.account-item { border-bottom: 0.5px solid var(--paper-3); }
+.account-item label {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; cursor: pointer;
+}
+.account-item input[type="radio"] { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--vermillion-500); flex: 0 0 auto; }
+.account-item .aname { display: block; font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 14.5px; color: var(--ink-0); }
+.account-item .adetail { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.account-item.blocked { opacity: 0.5; }
+.account-item.blocked label { cursor: not-allowed; }
+
+.status-line {
+  font-family: var(--font-sans); font-size: 14.5px; padding: 12px 14px; border-radius: var(--r-1);
+  margin-bottom: 18px;
+}
+.status-line.working { background: var(--paper-1); color: var(--ink-2); }
+.status-line.success { background: var(--green-50); color: var(--green-600); }
+
+.error-box {
+  font-family: var(--font-sans); font-size: 14px; color: var(--vermillion-700);
+  background: var(--vermillion-50); border: 1px solid var(--vermillion-100);
+  border-radius: var(--r-1); padding: 12px 14px; margin-bottom: 18px; line-height: 1.5;
+}
+
+.done-list { list-style: none; margin: 18px 0 26px; padding: 0; }
+.done-list li {
+  font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-1);
+  padding: 10px 0; border-bottom: 0.5px solid var(--paper-2); display: flex; gap: 8px; align-items: baseline;
+}
+.done-list li .check { color: var(--green-600); font-weight: var(--w-semi); }
+
+.step-title {
+  font-family: var(--font-display); font-weight: var(--w-medium); font-size: clamp(22px, 3vw, 28px);
+  color: var(--ink-0); margin: 0 0 8px; letter-spacing: var(--tr-tight);
+  font-variation-settings: "opsz" 60;
+}
+.step-sub { font-family: var(--font-sans); font-size: 14.5px; color: var(--ink-2); margin: 0 0 24px; max-width: 60ch; }
+
+.start-over-wrap { margin-top: 22px; text-align: right; }
+
+/* ── Footer ──────────────────────────────────────────── */
+footer.bot { border-top: 0.5px solid var(--paper-3); }
+footer.bot .wrap {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding-top: 22px; padding-bottom: 18px;
+}
+.foot-brand { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans);
+  font-weight: 600; font-size: 12px; color: var(--ink-1); text-transform: uppercase; letter-spacing: -0.005em; }
+.muted { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.foot-links { padding: 0 0 30px; text-align: center; }
+.foot-links .wrap { justify-content: center; padding-top: 0; }
+.foot-links a { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); text-decoration: none; margin: 0 10px; }
+.foot-links a:hover { color: var(--ink-0); }
+
+@media (max-width: 700px) {
+  header.top .wrap { padding-top: 14px; padding-bottom: 14px; }
+  .brand .tag { display: none; }        /* hide tagline on mobile, like the main nav */
+  .hero { padding-top: 40px; }
+  .product-row { flex-direction: column; align-items: flex-start; }
+  .product-row .pright { width: 100%; justify-content: space-between; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .actions button, .actions .btn { width: 100%; text-align: center; }
+}
+
+/* ── v2: grouped platform checklist + expandable cards ── */
+.group-label {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-3); margin: 16px 0 2px;
+}
+.group-label:first-of-type { margin-top: 6px; }
+.pcard { border-bottom: 0.5px solid var(--paper-3); }
+.pcard-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 16px 2px; background: none; border: none; border-radius: 0; text-align: left; cursor: pointer;
+  font-weight: normal;
+}
+.pcard-head:hover .pname { color: var(--vermillion-700); }
+.pcard-head .pname { font-family: var(--font-sans); font-weight: var(--w-semi); font-size: 15px; color: var(--ink-0); }
+.pcard-head .paccess { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.pcard-head .chev { font-family: var(--font-mono); color: var(--ink-3); margin-left: 8px; transition: transform 0.15s; display: inline-block; }
+.pcard.open .pcard-head .chev { transform: rotate(90deg); }
+.pcard-body { display: none; padding: 0 2px 22px; }
+.pcard.open .pcard-body { display: block; }
+.pcard-body .intro { font-size: 14.5px; color: var(--ink-1); margin: 0 0 14px; max-width: 62ch; }
+.steps { margin: 0 0 16px; padding-left: 22px; }
+.steps li { font-size: 14.5px; color: var(--ink-1); margin-bottom: 8px; line-height: 1.55; }
+.steps li strong { color: var(--ink-0); }
+.after { margin: 12px 0 0; padding: 12px 14px; background: var(--paper-1); border: 1px solid var(--paper-2); border-radius: var(--r-1); }
+.after p { margin: 0 0 6px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.after ul { margin: 0; padding-left: 18px; }
+.after li { font-size: 14px; color: var(--ink-1); margin-bottom: 4px; }
+.open-link {
+  display: inline-block; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--vermillion-700); text-decoration: underline; text-underline-offset: 3px;
+  margin: 0 0 16px;
+}
+.pcard-body .field { max-width: 420px; }
+.inline-error { font-size: 13.5px; color: var(--vermillion-700); margin: 0 0 12px; }
+.copy-chip {
+  font-family: var(--font-mono); font-size: 12px; background: var(--paper-1); border: 1px solid var(--paper-3);
+  border-radius: var(--r-1); padding: 1px 6px; cursor: pointer; color: var(--ink-0);
+}
+.copy-chip:hover { background: var(--vermillion-50); }
+.next-note { font-size: 14px; color: var(--ink-2); margin: 4px 0 0; max-width: 62ch; }
+</style>
+</head>
+<body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KFF7DGR5" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://fattailads.com/" aria-label="Fat Tail Ads home">
+      <span id="fta-monogram"></span>
+      Fat&nbsp;Tail&nbsp;Ads
+      <span class="tag">Performance&nbsp;Media&nbsp;Consultancy</span>
+    </a>
+    <a class="top-link" href="https://fattailads.com/">fattailads.com&nbsp;&#8599;</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Onboarding</span>
+    <h1 class="h1connect">Connect your accounts.</h1>
+    <p class="lede">Give Fat Tail Ads access to your ad, analytics and social accounts in a few minutes. You stay the owner, you never share a password, and you can remove us any time.</p>
+    <div class="chips">
+      <span class="chip">About 10 Minutes</span>
+      <span class="chip">No Passwords</span>
+      <span class="chip tail">Revoke Anytime</span>
+    </div>
+  </section>
+
+  <div class="curve" id="fta-curve" aria-hidden="true"></div>
+
+  <div class="card">
+    <div class="progress-rail" id="progress-rail">
+      <span class="step" data-step="1">1 About you</span>
+      <span class="step" data-step="2">2 Connect</span>
+      <span class="step" data-step="3">3 Done</span>
+    </div>
+
+    <div id="aria-status" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);"></div>
+    <div id="global-error-slot"></div>
+
+    <!-- Step 1: About you -->
+    <section class="wizard-step" id="step-1" data-step="1">
+      <h2 class="step-title">About you</h2>
+      <p class="step-sub">Tell us who&rsquo;s connecting, then untick anything your business doesn&rsquo;t use.</p>
+      <form id="form-about" novalidate>
+        <div class="field">
+          <label for="f-name">Your name</label>
+          <input type="text" id="f-name" name="name" required autocomplete="name">
+        </div>
+        <div class="field">
+          <label for="f-company">Company</label>
+          <input type="text" id="f-company" name="company" required autocomplete="organization">
+        </div>
+        <div class="field">
+          <label for="f-email">Work email</label>
+          <input type="email" id="f-email" name="email" required autocomplete="email">
+        </div>
+        <fieldset class="products">
+          <legend>Accounts to connect</legend>
+          <div id="platform-checklist"><p class="step-sub">Loading…</p></div>
+        </fieldset>
+        <p class="field hint" id="products-error" style="display:none;color:var(--vermillion-700);">Choose at least one account to connect.</p>
+        <div class="actions">
+          <button type="submit" class="btn-primary" id="btn-about-continue" disabled>Continue</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 2: One card per platform -->
+    <section class="wizard-step" id="step-2" data-step="2">
+      <h2 class="step-title">Connect your accounts</h2>
+      <p class="reassure">Open each one below and follow the steps. It takes a minute or two each, and you can do them in any order. You add us inside each platform&rsquo;s own settings, so you stay the owner and can remove us any time. Everything goes to <button type="button" class="copy-chip" id="copy-email" title="Copy">austin@fattailads.com</button>.</p>
+      <div id="platform-cards" class="product-list"></div>
+      <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-2">Start over</button></div>
+    </section>
+
+    <!-- Step 3: Done -->
+    <section class="wizard-step" id="step-3" data-step="3">
+      <h2 class="step-title">You&rsquo;re all set.</h2>
+      <p class="step-sub">Thanks! Your part is done. We&rsquo;ll confirm each connection on our side and email you if anything needs another look.</p>
+      <ul class="done-list" id="done-list"></ul>
+      <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-3">Start over</button></div>
+    </section>
+  </div>
+</main>
+
+<footer class="bot">
+  <div class="wrap">
+    <span class="foot-brand"><span id="fta-footer-monogram"></span>Fat&nbsp;Tail&nbsp;Ads</span>
+    <span class="muted">&copy; 2026 &middot; Performance Media Consultancy</span>
+  </div>
+</footer>
+<div class="foot-links wrap">
+  <a href="https://fattailads.com/privacy">Privacy</a>
+  <a href="https://fattailads.com/terms">Terms</a>
+</div>
+<script>
+// Fat-tail logomark + curve — same geometry as the main site (src/1.jsx), rendered in vanilla JS.
+(function () {
+  function gaussianBodyPath(width, height, closed) {
+    var base = height - 10, peakY = 10, amp = base - peakY;
+    var bodyStart = width * 0.04, bodyEnd = width * 0.70, mu = width * 0.32, sigma = width * 0.09;
+    var step = (bodyEnd - bodyStart) / 60, pts = [];
+    for (var x = bodyStart; x <= bodyEnd + 0.001; x += step) {
+      var y = base - amp * Math.exp(-((x - mu) * (x - mu)) / (2 * sigma * sigma));
+      pts.push([x, y]);
+    }
+    var d = "M " + pts[0][0].toFixed(2) + " " + pts[0][1].toFixed(2);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      var c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+      var c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+      d += " C " + c1x.toFixed(2) + " " + c1y.toFixed(2) + ", " + c2x.toFixed(2) + " " + c2y.toFixed(2) + ", " + p2[0].toFixed(2) + " " + p2[1].toFixed(2);
+    }
+    if (closed) d += " L " + pts[pts.length - 1][0].toFixed(2) + " " + base + " L " + pts[0][0].toFixed(2) + " " + base + " Z";
+    return { d: d, tailStartX: pts[pts.length - 1][0], baseY: base };
+  }
+  function monogram(size) {
+    var W = 64, H = 58, body = gaussianBodyPath(W, H, false), fill = gaussianBodyPath(W, H, true), baseY = body.baseY;
+    var stroke = "#14120E", tail = "#C8502A", grid = "#D8D0BD";
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 64 64" fill="none" style="flex:0 0 auto;display:block">'
+      + '<rect x="0.5" y="0.5" width="63" height="63" rx="2" stroke="' + stroke + '" stroke-width="1" fill="#FBF8F3"/>'
+      + '<line x1="5" y1="' + baseY + '" x2="59" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + stroke + '" fill-opacity="0.1"/>'
+      + '<path d="' + body.d + '" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + body.tailStartX.toFixed(2) + ' ' + baseY + ' C ' + (W * 0.82) + ' ' + baseY + ', ' + (W * 0.92) + ' ' + baseY + ', 59 ' + baseY + '" stroke="' + tail + '" stroke-width="2" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="59" cy="' + baseY + '" r="2" fill="' + tail + '"/></svg>';
+  }
+  function curve(width, height) {
+    var body = gaussianBodyPath(width, height, false), fill = gaussianBodyPath(width, height, true), baseY = body.baseY, tailStart = body.tailStartX;
+    var bd = "#14120E", tl = "#C8502A", grid = "#EAE4D6";
+    return '<svg viewBox="0 0 ' + width + ' ' + height + '" width="100%" height="' + height + '" preserveAspectRatio="none" style="display:block">'
+      + '<line x1="0" y1="' + baseY + '" x2="' + width + '" y2="' + baseY + '" stroke="' + grid + '" stroke-width="0.5"/>'
+      + '<path d="' + fill.d + '" fill="' + bd + '" fill-opacity="0.08"/>'
+      + '<path d="' + body.d + '" stroke="' + bd + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '<path d="M ' + tailStart.toFixed(2) + ' ' + baseY + ' C ' + (width * 0.82) + ' ' + baseY + ', ' + (width * 0.92) + ' ' + baseY + ', ' + (width - 2) + ' ' + baseY + '" stroke="' + tl + '" stroke-width="1.6" stroke-linecap="round" fill="none"/>'
+      + '<circle cx="' + (width - 2) + '" cy="' + baseY + '" r="2.5" fill="' + tl + '"/></svg>';
+  }
+  var m = document.getElementById('fta-monogram'); if (m) m.innerHTML = monogram(22);
+  var fm = document.getElementById('fta-footer-monogram'); if (fm) fm.innerHTML = monogram(20);
+  var c = document.getElementById('fta-curve'); if (c) c.innerHTML = curve(1160, 120);
+
+  // Measurement: mark that the connect page was viewed.
+  window.dataLayer = window.dataLayer || [];
+  window.dataLayer.push({ event: 'connect_page_view', page_type: 'onboarding_v2' });
+}());
+</script>
+
+<script>
+// ============================================================
+// FAT TAIL ADS — Connect wizard (Phase 1: agency + guided)
+// ============================================================
+(function () {
+  'use strict';
+  var SESSION_KEY = 'fta_connect_v2';
+  var DONE = ['verified', 'already_had_access', 'invited', 'requested', 'invite_sent', 'client_reported'];
+  var qs = new URLSearchParams(window.location.search);
+  var isTest = qs.get('test') === '1';
+  // ?platforms=ga4,gtm limits the list (a lightweight custom link until the link model lands).
+  var only = (qs.get('platforms') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  var catalogue = [];
+  var byId = {};
+  var statusById = {};
+
+  var ariaStatus = document.getElementById('aria-status');
+  function announce(msg) { if (ariaStatus) ariaStatus.textContent = msg; }
+  function getSession() { try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; } }
+  function setSession(o) { try { sessionStorage.setItem(SESSION_KEY, JSON.stringify(o)); } catch (e) {} }
+  function clearSession() { try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {} }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  // Catalogue text is plain with **bold** markers: escape first, then add <strong>.
+  function rich(s) { return escapeHtml(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); }
+  function fetchJson(url, opts) {
+    return fetch(url, opts).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (!res.ok) {
+          var err = new Error((body && body.message) || 'Something went wrong — please try again.');
+          err.code = body && body.error;
+          throw err;
+        }
+        return body;
+      });
+    });
+  }
+  function showGlobalError(msg) {
+    document.getElementById('global-error-slot').innerHTML = '<div class="error-box">' + escapeHtml(msg) + '</div>';
+  }
+  function clearGlobalError() { document.getElementById('global-error-slot').innerHTML = ''; }
+
+  function showStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(function (el) {
+      el.classList.toggle('active', el.getAttribute('data-step') === String(n));
+    });
+    document.querySelectorAll('#progress-rail .step').forEach(function (el) {
+      var s = Number(el.getAttribute('data-step'));
+      el.classList.toggle('current', s === n);
+      el.classList.toggle('done', s < n);
+    });
+    announce('Step ' + n + ' of 3');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Step 1 ─────────────────────────────────────────────
+  var aboutForm = document.getElementById('form-about');
+  var btnContinue = document.getElementById('btn-about-continue');
+
+  function renderChecklist() {
+    var list = only.length ? catalogue.filter(function (p) { return only.indexOf(p.id) !== -1; }) : catalogue;
+    if (!list.length) list = catalogue;
+    var html = '', group = '';
+    list.forEach(function (p) {
+      if (p.group !== group) { group = p.group; html += '<div class="group-label">' + escapeHtml(group) + '</div>'; }
+      html += '<div class="check-row">' +
+        '<input type="checkbox" id="p-' + p.id + '" name="products" value="' + p.id + '" checked>' +
+        '<label for="p-' + p.id + '">' + escapeHtml(p.label) + '<span class="sub">' + escapeHtml(p.role) + '</span></label>' +
+      '</div>';
+    });
+    document.getElementById('platform-checklist').innerHTML = html;
+    btnContinue.disabled = false;
+  }
+
+  aboutForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearGlobalError();
+    if (!aboutForm.reportValidity()) return;
+    var products = Array.prototype.map.call(aboutForm.querySelectorAll('input[name="products"]:checked'), function (el) { return el.value; });
+    var errEl = document.getElementById('products-error');
+    if (!products.length) { errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    var name = document.getElementById('f-name').value.trim();
+    var company = document.getElementById('f-company').value.trim();
+    var email = document.getElementById('f-email').value.trim();
+    btnContinue.disabled = true;
+    btnContinue.textContent = 'Continuing…';
+    fetchJson('/api/connect/request', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, company: company, email: email, products: products, test: isTest })
+    }).then(function (data) {
+      setSession({ requestId: data.requestId, products: products, test: isTest });
+      window.dataLayer.push({ event: 'connect_request_started', connect_platform_count: products.length });
+      statusById = {};
+      renderCards();
+      showStep(2);
+    }).catch(function (err) {
+      showGlobalError(err.message);
+    }).finally(function () {
+      btnContinue.disabled = false;
+      btnContinue.textContent = 'Continue';
+    });
+  });
+
+  // ── Step 2 ─────────────────────────────────────────────
+  var cardsEl = document.getElementById('platform-cards');
+
+  function pill(status, mechanism) {
+    if (status === 'verified' || status === 'already_had_access') return ['pill connected', 'Connected ✓'];
+    if (status === 'requested' || status === 'invite_sent') return ['pill connected', 'Request received ✓'];
+    if (status === 'client_reported' || status === 'invited') return ['pill connected', 'Done ✓'];
+    if (status === 'failed') return ['pill attention', 'Needs attention'];
+    return ['pill not-connected', mechanism === 'agency' ? 'Needs your ID' : 'To do'];
+  }
+
+  function cardHtml(p) {
+    var st = statusById[p.id] || {};
+    var pl = pill(st.status, p.mechanism);
+    var done = DONE.indexOf(st.status) !== -1;
+    var body = '';
+    if (p.intro) body += '<p class="intro">' + rich(p.intro) + '</p>';
+    if (p.steps.length) body += '<ol class="steps">' + p.steps.map(function (s) { return '<li>' + rich(s) + '</li>'; }).join('') + '</ol>';
+    if (p.link) body += '<a class="open-link" href="' + escapeHtml(p.link) + '" target="_blank" rel="noopener">Open ' + escapeHtml(p.label) + ' &#8599;</a>';
+    if (st.status === 'failed' && st.detail) body += '<div class="error-box">' + escapeHtml(st.detail) + '</div>';
+    if (done) {
+      body += '<p class="next-note">' + (p.mechanism === 'agency'
+        ? 'Thanks — we have your details and will send the request shortly.'
+        : 'Thanks — we&rsquo;ll confirm it on our side.') + '</p>';
+      if (p.after.length) body += afterHtml(p);
+      body += '<div class="actions" style="margin-top:14px;"><button type="button" class="btn-text" data-role="redo">Change what I entered</button></div>';
+    } else {
+      body += '<form data-role="form" novalidate>' + p.fields.map(function (f) {
+        var fid = 'in-' + p.id + '-' + f.key;
+        return '<div class="field"><label for="' + fid + '">' + escapeHtml(f.label) + (f.required ? '' : ' <span style="text-transform:none;letter-spacing:0;">(optional)</span>') + '</label>' +
+          '<input type="text" id="' + fid + '" name="' + escapeHtml(f.key) + '"' + (f.required ? ' required' : '') + ' autocomplete="off">' +
+          (f.hint ? '<div class="hint">' + escapeHtml(f.hint) + '</div>' : '') + '</div>';
+      }).join('') +
+        '<p class="inline-error" data-role="err" style="display:none;"></p>' +
+        '<div class="actions"><button type="submit" class="btn-primary">' + (p.mechanism === 'agency' ? 'Send us the request' : 'I&rsquo;ve added Fat Tail Ads') + '</button></div>' +
+        '</form>';
+      if (p.after.length) body += afterHtml(p);
+    }
+    return '<div class="pcard" data-id="' + p.id + '">' +
+      '<button type="button" class="pcard-head" aria-expanded="false">' +
+        '<span><span class="pname">' + escapeHtml(p.label) + '</span><span class="chev" aria-hidden="true">&#8250;</span>' +
+        '<div class="paccess">' + escapeHtml(p.role) + '</div></span>' +
+        '<span class="' + pl[0] + '">' + pl[1] + '</span>' +
+      '</button>' +
+      '<div class="pcard-body">' + body + '</div>' +
+    '</div>';
+  }
+
+  function afterHtml(p) {
+    return '<div class="after"><p>What happens next</p><ul>' + p.after.map(function (s) { return '<li>' + rich(s) + '</li>'; }).join('') + '</ul></div>';
+  }
+
+  function renderCards(keepOpen) {
+    var session = getSession();
+    if (!session) { showStep(1); return; }
+    var open = keepOpen || {};
+    cardsEl.innerHTML = session.products.filter(function (id) { return byId[id]; }).map(function (id) { return cardHtml(byId[id]); }).join('');
+    // Open the first card still to do (or whatever was open before a re-render).
+    var firstTodo = null;
+    cardsEl.querySelectorAll('.pcard').forEach(function (card) {
+      var id = card.getAttribute('data-id');
+      var isDone = DONE.indexOf((statusById[id] || {}).status) !== -1;
+      if (!firstTodo && !isDone) firstTodo = id;
+      if (open[id]) setOpen(card, true);
+      wireCard(card, id);
+    });
+    if (!Object.keys(open).length && firstTodo) setOpen(cardsEl.querySelector('.pcard[data-id="' + firstTodo + '"]'), true);
+  }
+
+  function setOpen(card, isOpen) {
+    card.classList.toggle('open', isOpen);
+    card.querySelector('.pcard-head').setAttribute('aria-expanded', String(isOpen));
+  }
+
+  function wireCard(card, id) {
+    card.querySelector('.pcard-head').addEventListener('click', function () { setOpen(card, !card.classList.contains('open')); });
+    var redo = card.querySelector('[data-role="redo"]');
+    if (redo) redo.addEventListener('click', function () {
+      statusById[id] = { status: 'pending' };
+      var o = {}; o[id] = true; renderCards(o);
+    });
+    var form = card.querySelector('[data-role="form"]');
+    if (!form) return;
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var errEl = form.querySelector('[data-role="err"]');
+      errEl.style.display = 'none';
+      if (!form.reportValidity()) return;
+      var input = {};
+      Array.prototype.forEach.call(form.querySelectorAll('input'), function (el) { input[el.name] = el.value.trim(); });
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      fetchJson('/api/connect/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request: getSession().requestId, product: id, input: input })
+      }).then(function (data) {
+        statusById[id] = { status: data.status };
+        window.dataLayer.push({ event: 'connect_platform_submitted', connect_platform: id });
+        announce(byId[id].label + ' done');
+        refresh(id);
+      }).catch(function (err) {
+        errEl.textContent = err.message;
+        errEl.style.display = 'block';
+        btn.disabled = false;
+      });
+    });
+  }
+
+  function refresh(justDone) {
+    var session = getSession();
+    if (!session) return;
+    fetchJson('/api/connect/status?request=' + encodeURIComponent(session.requestId)).then(function (data) {
+      (data.items || []).forEach(function (i) { statusById[i.product] = i; });
+      if (data.complete) { renderDone(); showStep(3); return; }
+      var open = {};
+      cardsEl.querySelectorAll('.pcard.open').forEach(function (c) { open[c.getAttribute('data-id')] = true; });
+      if (justDone) {
+        delete open[justDone];
+        var next = session.products.filter(function (id) { return DONE.indexOf((statusById[id] || {}).status) === -1; })[0];
+        if (next) open[next] = true;
+      }
+      renderCards(open);
+    }).catch(function (err) {
+      if (err.code === 'not_found') { clearSession(); showStep(1); return; }
+      showGlobalError(err.message);
+    });
+  }
+
+  function renderDone() {
+    var session = getSession();
+    document.getElementById('done-list').innerHTML = session.products.filter(function (id) { return byId[id]; }).map(function (id) {
+      return '<li><span class="check">&#10003;</span><span>' + escapeHtml(byId[id].label) + ' <span class="muted" style="margin-left:6px;">' + escapeHtml(byId[id].role) + '</span></span></li>';
+    }).join('');
+  }
+
+  function startOver() { clearSession(); window.location.href = window.location.pathname + (isTest ? '?test=1' : ''); }
+  document.getElementById('btn-start-over-2').addEventListener('click', startOver);
+  document.getElementById('btn-start-over-3').addEventListener('click', startOver);
+
+  document.getElementById('copy-email').addEventListener('click', function () {
+    var el = this, text = el.textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () {
+      el.textContent = 'Copied ✓';
+      setTimeout(function () { el.textContent = text; }, 1400);
+    });
+  });
+
+  // ── Boot ───────────────────────────────────────────────
+  fetchJson('/api/connect/platforms').then(function (data) {
+    catalogue = data.platforms || [];
+    catalogue.forEach(function (p) { byId[p.id] = p; });
+    if (data.receiving && data.receiving.google) document.getElementById('copy-email').textContent = data.receiving.google;
+    renderChecklist();
+    var session = getSession();
+    if (session && session.requestId) { showStep(2); renderCards(); refresh(); }
+    else showStep(1);
+  }).catch(function () {
+    showGlobalError('We couldn’t load this page. Please refresh, or email austin@fattailads.com.');
+    showStep(1);
+  });
+}());
+</script>
+</body>
+</html>

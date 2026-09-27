@@ -54,6 +54,14 @@ export async function db() {
         created_at timestamptz NOT NULL DEFAULT now(),
         used_at timestamptz
       )`;
+      // Phase 1 columns: what the client typed, and the FTA-side follow-up
+      // (fta_status: 'todo' → 'done'; null when nothing is owed).
+      await q`ALTER TABLE connect_items ADD COLUMN IF NOT EXISTS client_input jsonb`;
+      await q`ALTER TABLE connect_items ADD COLUMN IF NOT EXISTS fta_status text`;
+      await q`ALTER TABLE connect_items ADD COLUMN IF NOT EXISTS fta_note text`;
+      await q`ALTER TABLE connect_items ADD COLUMN IF NOT EXISTS fta_updated_at timestamptz`;
+      // Admin sign-in reuses the OAuth state table with no request attached.
+      await q`ALTER TABLE connect_oauth_states ALTER COLUMN request_id DROP NOT NULL`;
       await q`CREATE TABLE IF NOT EXISTS connect_audit_log (
         id bigserial PRIMARY KEY,
         ts timestamptz NOT NULL DEFAULT now(),

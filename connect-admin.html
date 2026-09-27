@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Connect admin — Fat Tail Ads</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..600&family=Inter+Tight:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper-0: #FBF8F3; --paper-1: #F5F1E8; --paper-2: #EAE4D6; --paper-3: #D8D0BD;
+  --ink-0: #14120E; --ink-1: #2A2720; --ink-2: #5C564A; --ink-3: #8A8576;
+  --vermillion-50: #FBEDE5; --vermillion-100: #F5D4C2; --vermillion-500: #C8502A; --vermillion-700: #8E3516;
+  --green-600: #2E7D4F; --green-50: #E7F3EC; --amber-600: #B4790A; --amber-50: #FCF1DC;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Inter Tight", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper-0); color: var(--ink-1); font-family: var(--font-sans); font-size: 14.5px; line-height: 1.45; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+header { border-bottom: 0.5px solid var(--paper-3); }
+header .wrap { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 16px; padding-bottom: 16px; }
+.brand { font-weight: 600; font-size: 13px; text-transform: uppercase; color: var(--ink-0); }
+.mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-3); }
+h1 { font-family: var(--font-display); font-weight: 500; font-size: clamp(28px, 5vw, 40px); color: var(--ink-0); margin: 32px 0 6px; letter-spacing: -0.02em; }
+h2 { font-family: var(--font-display); font-weight: 500; font-size: 22px; color: var(--ink-0); margin: 36px 0 12px; }
+.sub { color: var(--ink-2); margin: 0 0 8px; }
+button { font-family: var(--font-sans); font-weight: 600; font-size: 13px; border-radius: 2px; border: 1px solid var(--paper-3); background: #fff; color: var(--ink-1); padding: 7px 12px; cursor: pointer; }
+button:hover { background: var(--paper-1); }
+button.primary { background: var(--vermillion-500); border-color: var(--vermillion-500); color: #fff; }
+button.primary:hover { background: var(--vermillion-700); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--vermillion-500); outline-offset: 2px; }
+.card { background: #fff; border: 1px solid var(--paper-3); border-radius: 4px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; vertical-align: top; padding: 11px 12px; border-bottom: 0.5px solid var(--paper-2); }
+th { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+tr:last-child td { border-bottom: none; }
+.who { font-weight: 600; color: var(--ink-0); }
+.small { font-size: 12.5px; color: var(--ink-2); }
+.pill { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; white-space: nowrap; display: inline-block; margin: 0 4px 4px 0; background: var(--paper-2); color: var(--ink-2); }
+.pill.ok { background: var(--green-50); color: var(--green-600); }
+.pill.todo { background: var(--amber-50); color: var(--amber-600); }
+.pill.bad { background: var(--vermillion-50); color: var(--vermillion-700); }
+.pill.test { background: var(--paper-1); color: var(--ink-3); border: 1px dashed var(--paper-3); }
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.empty { padding: 18px 14px; color: var(--ink-2); }
+.error-box { color: var(--vermillion-700); background: var(--vermillion-50); border: 1px solid var(--vermillion-100); border-radius: 2px; padding: 12px 14px; margin: 18px 0; }
+code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1); padding: 1px 5px; border-radius: 2px; }
+#signed-out { display: none; }
+#app { display: none; }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <span class="brand">Fat Tail Ads &middot; Connect admin</span>
+  <span class="mono" id="who"></span>
+</div></header>
+
+<main class="wrap">
+  <div id="error-slot"></div>
+
+  <section id="signed-out">
+    <h1>Connect admin</h1>
+    <p class="sub">Sign in with an allowed Google account to see client access requests.</p>
+    <p><button class="primary" id="btn-login">Sign in with Google</button></p>
+  </section>
+
+  <section id="app">
+    <h1>Client access</h1>
+    <p class="sub">Follow-ups FTA owes, oldest first, then every recent request. Test requests are marked.</p>
+
+    <h2>Follow-ups <span class="mono" id="todo-count"></span></h2>
+    <div class="card"><table>
+      <thead><tr><th>Client</th><th>Platform</th><th>What they gave us</th><th>FTA to do</th></tr></thead>
+      <tbody id="todo-body"></tbody>
+    </table></div>
+
+    <h2>Requests <span class="mono" id="req-count"></span></h2>
+    <div class="card"><table>
+      <thead><tr><th>When</th><th>Client</th><th>Platforms</th><th>Status</th></tr></thead>
+      <tbody id="req-body"></tbody>
+    </table></div>
+
+    <p style="margin:28px 0 60px;"><button id="btn-logout">Sign out</button> <button id="btn-reload">Refresh</button></p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var API = '/api/connect/admin/';
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+  function showError(msg) { document.getElementById('error-slot').innerHTML = msg ? '<div class="error-box">' + esc(msg) + '</div>' : ''; }
+  function api(path, opts) {
+    return fetch(API + path, opts).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (b) {
+        if (!r.ok) { var e = new Error(b.message || 'Request failed.'); e.code = b.error; throw e; }
+        return b;
+      });
+    });
+  }
+  var STATUS = {
+    verified: ['ok', 'Verified'], already_had_access: ['ok', 'Already had access'],
+    invited: ['todo', 'GTM invite pending'], requested: ['todo', 'Needs link sent'],
+    invite_sent: ['todo', 'Link sent'], client_reported: ['todo', 'Client says done'],
+    failed: ['bad', 'Failed'], pending: ['', 'Client not done']
+  };
+  function pill(status) { var s = STATUS[status] || ['', status]; return '<span class="pill ' + s[0] + '">' + esc(s[1]) + '</span>'; }
+  function inputText(i) {
+    var v = i.client_input && typeof i.client_input === 'object' ? i.client_input : {};
+    var parts = Object.keys(v).map(function (k) { return '<code>' + esc(k) + '</code> ' + esc(v[k]); });
+    if (!parts.length && i.asset_name) parts.push(esc(i.asset_name));
+    return parts.join('<br>') || '<span class="small">—</span>';
+  }
+
+  function render(data) {
+    document.getElementById('who').textContent = data.admin;
+    var todo = data.todo || [];
+    document.getElementById('todo-count').textContent = todo.length ? '(' + todo.length + ')' : '';
+    document.getElementById('todo-body').innerHTML = todo.length ? todo.map(function (i) {
+      var agency = i.mechanism === 'agency';
+      return '<tr data-item="' + esc(i.id) + '">' +
+        '<td><span class="who">' + esc(i.company) + '</span>' + (i.is_test ? ' <span class="pill test">Test</span>' : '') + '<div class="small">' + esc(i.client_name) + '</div></td>' +
+        '<td>' + esc(i.label) + '<div>' + pill(i.status) + '</div><div class="small">since ' + esc(fmt(i.fta_updated_at)) + '</div></td>' +
+        '<td>' + inputText(i) + '</td>' +
+        '<td>' + esc(i.ftaAction) + (i.fta_note ? '<div class="small">Note: ' + esc(i.fta_note) + '</div>' : '') +
+          '<div class="row-actions">' +
+            (agency && i.status === 'requested' ? '<button data-act="sent">Mark link sent</button>' : '') +
+            '<button class="primary" data-act="done">Mark verified</button>' +
+            '<button data-act="failed">Failed…</button>' +
+          '</div></td>' +
+      '</tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">Nothing owed. 🎉</td></tr>';
+
+    var reqs = data.requests || [];
+    document.getElementById('req-count').textContent = '(' + reqs.length + ')';
+    document.getElementById('req-body').innerHTML = reqs.length ? reqs.map(function (r) {
+      return '<tr>' +
+        '<td class="small">' + esc(fmt(r.created_at)) + '</td>' +
+        '<td><span class="who">' + esc(r.company) + '</span>' + (r.is_test ? ' <span class="pill test">Test</span>' : '') +
+          '<div class="small">' + esc(r.client_name) + ' &middot; ' + esc(r.email) + '</div></td>' +
+        '<td>' + r.items.map(function (i) { return '<div style="margin-bottom:4px;">' + esc(i.label) + ' ' + pill(i.status) + '</div>'; }).join('') + '</td>' +
+        '<td>' + (r.status === 'complete' ? '<span class="pill ok">Client done</span>' : '<span class="pill">Open</span>') +
+          (r.ga4_fired_at && !r.is_test ? '<div class="small">GA4 sent ' + esc(fmt(r.ga4_fired_at)) + '</div>' : '') + '</td>' +
+      '</tr>';
+    }).join('') : '<tr><td colspan="4" class="empty">No requests yet.</td></tr>';
+
+    document.querySelectorAll('#todo-body [data-act]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.closest('tr').getAttribute('data-item');
+        var act = btn.getAttribute('data-act');
+        var note = '';
+        if (act === 'failed') {
+          note = window.prompt('What went wrong? The client sees this text.');
+          if (note === null) return;
+        }
+        btn.disabled = true;
+        api('item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, action: act, note: note }) })
+          .then(load)
+          .catch(function (e) { showError(e.message); btn.disabled = false; });
+      });
+    });
+  }
+
+  function load() {
+    showError('');
+    return api('requests').then(function (data) {
+      document.getElementById('signed-out').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      render(data);
+    }).catch(function (e) {
+      if (e.code === 'signed_out') {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('signed-out').style.display = 'block';
+      } else showError(e.message);
+    });
+  }
+
+  var qs = new URLSearchParams(location.search);
+  if (qs.get('error') === 'not_allowed') showError('That Google account isn’t allowed to use the admin.');
+  if (qs.toString()) history.replaceState(null, '', location.pathname);
+
+  document.getElementById('btn-login').addEventListener('click', function () { location.href = API + 'login'; });
+  document.getElementById('btn-reload').addEventListener('click', load);
+  document.getElementById('btn-logout').addEventListener('click', function () {
+    api('logout', { method: 'POST' }).then(function () { location.reload(); });
+  });
+  load();
+}());
+</script>
+</body>
+</html>

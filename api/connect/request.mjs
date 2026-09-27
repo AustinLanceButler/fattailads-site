@@ -1,11 +1,12 @@
 // POST /api/connect/request — start a client access request.
-// Body: { name, company, email, products: ['ga4'|'gtm'], test? }
+// Body: { name, company, email, products: [platform ids], test? }
+// /connect/beta sends ga4/gtm (Google sign-in); /connect/v2 sends any of PLATFORM_IDS.
 // Returns { requestId }. The id is an unguessable UUID and is the only handle
 // the browser gets; nothing else about the request is exposed without it.
 
 import { db, audit } from '../_lib/db.mjs';
 import { allowMethods, readBody, sameOrigin, sendError, sendJson } from '../_lib/http.mjs';
-import { PRODUCTS } from '../_lib/google.mjs';
+import { PLATFORM_IDS, platform } from '../_lib/platforms.mjs';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const HOURLY_CAP = 30; // crude flood guard until the Vercel WAF rule lands
@@ -18,7 +19,7 @@ export default async function handler(req, res) {
   const name = String(b.name || '').trim().slice(0, 120);
   const company = String(b.company || '').trim().slice(0, 160);
   const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
-  const products = Array.isArray(b.products) ? [...new Set(b.products.map(String))].filter((p) => PRODUCTS[p]) : [];
+  const products = Array.isArray(b.products) ? [...new Set(b.products.map(String))].filter((p) => PLATFORM_IDS.includes(p)) : [];
   const isTest = b.test === true;
 
   if (!name || !company) return sendError(res, 400, 'invalid_input', 'Please enter your name and company.');
@@ -33,7 +34,7 @@ export default async function handler(req, res) {
     const [row] = await q`INSERT INTO connect_requests (client_name, company, email, products, is_test)
                           VALUES (${name}, ${company}, ${email}, ${products}, ${isTest}) RETURNING id`;
     for (const p of products) {
-      await q`INSERT INTO connect_items (request_id, product, role) VALUES (${row.id}, ${p}, ${PRODUCTS[p].role})`;
+      await q`INSERT INTO connect_items (request_id, product, role) VALUES (${row.id}, ${p}, ${platform(p).role})`;
     }
     await audit(row.id, 'request_created', { products, isTest });
     return sendJson(res, { requestId: row.id }, 201);
