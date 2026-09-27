@@ -145,41 +145,62 @@ export async function listAccounts(product, token) {
 }
 
 // ── Grant + read-back verification ────────────────────────────────────────────
-// Returns { status: 'verified' | 'already_had_access' | 'failed', detail }.
+// Returns { status: 'verified' | 'already_had_access' | 'failed', detail, trace }.
+// `trace` records each Google call's HTTP status and error text (never tokens)
+// for the audit log. The read-back retries briefly: listings can lag a write,
+// and the Tag Manager API throttles aggressively.
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function step(trace, name, resp) {
+  const e = resp.body && resp.body.error;
+  trace.push({ step: name, status: resp.status, ...(e ? { error: String(e.message || e.status || '').slice(0, 300) } : {}) });
+  return resp;
+}
+
+async function readBack(trace, name, fetchList, hasUser) {
+  for (const wait of [0, 1500, 4000]) {
+    if (wait) await sleep(wait);
+    const list = step(trace, name, await fetchList());
+    if (list.ok && hasUser(list.body)) return true;
+  }
+  return false;
+}
 
 export async function grantAndVerify(product, token, accountId) {
   const email = receivingEmail();
-  if (!/^\d+$/.test(String(accountId))) return { status: 'failed', detail: 'Invalid account.' };
+  const trace = [];
+  if (!/^\d+$/.test(String(accountId))) return { status: 'failed', detail: 'Invalid account.', trace };
 
   if (product === 'ga4') {
     const base = `https://analyticsadmin.googleapis.com/v1alpha/accounts/${accountId}/accessBindings`;
-    const created = await gapi(token, base, { method: 'POST', body: JSON.stringify({ user: email, roles: ['predefinedRoles/editor'] }) });
+    const created = step(trace, 'create_binding', await gapi(token, base, { method: 'POST', body: JSON.stringify({ user: email, roles: ['predefinedRoles/editor'] }) }));
     const already = created.status === 409;
-    if (!created.ok && !already) return { status: 'failed', detail: grantFailureMessage(created, 'Google Analytics') };
-    const list = await gapi(token, `${base}?pageSize=500`);
-    const found = list.ok && (list.body.accessBindings || []).some((b) => String(b.user || '').toLowerCase() === email);
-    if (!found) return { status: 'failed', detail: 'Access was requested but could not be confirmed. Please try again.' };
-    return { status: already ? 'already_had_access' : 'verified', detail: '' };
+    if (!created.ok && !already) return { status: 'failed', detail: grantFailureMessage(created, 'Google Analytics'), trace };
+    const found = await readBack(trace, 'list_bindings', () => gapi(token, `${base}?pageSize=500`),
+      (b) => (b.accessBindings || []).some((x) => String(x.user || '').toLowerCase() === email));
+    if (!found) return { status: 'failed', detail: 'Access was requested but could not be confirmed. Please try again.', trace };
+    return { status: already ? 'already_had_access' : 'verified', detail: '', trace };
   }
 
   if (product === 'gtm') {
     const base = `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${accountId}`;
-    const containers = await gapi(token, `${base}/containers`);
-    if (!containers.ok) return { status: 'failed', detail: grantFailureMessage(containers, 'Tag Manager') };
+    const containers = step(trace, 'list_containers', await gapi(token, `${base}/containers`));
+    if (!containers.ok) return { status: 'failed', detail: grantFailureMessage(containers, 'Tag Manager'), trace };
     const containerAccess = (containers.body.container || []).map((c) => ({ containerId: String(c.containerId), permission: 'publish' }));
-    const created = await gapi(token, `${base}/user_permissions`, {
+    const created = step(trace, 'create_permission', await gapi(token, `${base}/user_permissions`, {
       method: 'POST',
       body: JSON.stringify({ emailAddress: email, accountAccess: { permission: 'user' }, containerAccess }),
-    });
+    }));
     const already = created.status === 409;
-    if (!created.ok && !already) return { status: 'failed', detail: grantFailureMessage(created, 'Tag Manager') };
-    const list = await gapi(token, `${base}/user_permissions`);
-    const found = list.ok && (list.body.userPermission || []).some((u) => String(u.emailAddress || '').toLowerCase() === email);
-    if (!found) return { status: 'failed', detail: 'Access was requested but could not be confirmed. Please try again.' };
-    return { status: already ? 'already_had_access' : 'verified', detail: '' };
+    if (!created.ok && !already) return { status: 'failed', detail: grantFailureMessage(created, 'Tag Manager'), trace };
+    const found = await readBack(trace, 'list_permissions', () => gapi(token, `${base}/user_permissions`),
+      (b) => (b.userPermission || []).some((u) => String(u.emailAddress || '').toLowerCase() === email));
+    if (!found) return { status: 'failed', detail: 'Access was requested but could not be confirmed. Please try again.', trace };
+    return { status: already ? 'already_had_access' : 'verified', detail: '', trace };
   }
 
-  return { status: 'failed', detail: 'Unsupported product.' };
+  return { status: 'failed', detail: 'Unsupported product.', trace };
 }
 
 function grantFailureMessage(resp, productName) {

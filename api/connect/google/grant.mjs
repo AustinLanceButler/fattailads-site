@@ -25,7 +25,8 @@ export default async function handler(req, res) {
 
   try {
     const q = await db();
-    const [item] = await q`SELECT id FROM connect_items WHERE request_id = ${requestId} AND product = ${product}`;
+    const [item] = await q`SELECT i.id, r.is_test FROM connect_items i JOIN connect_requests r ON r.id = i.request_id
+                           WHERE i.request_id = ${requestId} AND i.product = ${product}`;
     if (!item) return sendError(res, 404, 'not_found', 'Unknown request.');
 
     // Only act on an account this Google user can actually see.
@@ -41,14 +42,15 @@ export default async function handler(req, res) {
     await q`UPDATE connect_items SET status = ${result.status}, asset_id = ${accountId}, asset_name = ${account.name},
                    detail = ${result.detail || null}, verified_at = ${ok ? new Date().toISOString() : null}, updated_at = now()
             WHERE id = ${item.id}`;
-    await audit(requestId, 'grant_attempted', { product, accountId, status: result.status });
+    await audit(requestId, 'grant_attempted', { product, accountId, status: result.status, trace: result.trace });
 
     if (ok) {
       await revokeToken(token);
       clearCookie(res, TOKEN_COOKIE, COOKIE_PATH);
       await maybeFireCompleted(q, requestId);
     }
-    return sendJson(res, { status: result.status, assetName: account.name, detail: result.detail || '' });
+    // Test requests (?test=1) also return the Google call trace (statuses + error text only) for debugging.
+    return sendJson(res, { status: result.status, assetName: account.name, detail: result.detail || '', ...(item.is_test ? { trace: result.trace } : {}) });
   } catch (err) {
     console.error('[connect/google/grant]', err.status, err.message);
     if (err.status === 401) return sendError(res, 401, 'session_expired', 'Your Google sign-in expired. Please sign in again.');
