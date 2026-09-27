@@ -19,8 +19,9 @@ export function identities() {
     metaBusinessId: process.env.CONNECT_META_BUSINESS_ID || '1874940222979161',
     metaBusinessName: 'Fat Tail Ads',
     msManager: 'Fat Tail Ads, LLC',
+    googleAdsMcc: process.env.CONNECT_GOOGLE_ADS_MCC || '673-311-0705',
     linkedinName: process.env.CONNECT_LINKEDIN_NAME || 'Austin Butler',
-    linkedinUrl: process.env.CONNECT_LINKEDIN_URL || '',
+    linkedinUrl: process.env.CONNECT_LINKEDIN_URL || 'https://www.linkedin.com/in/austinlancebutler/',
   };
 }
 
@@ -52,7 +53,7 @@ function catalogue() {
         'Watch for an email from Google Ads (usually within one business day) and click **Accept**.',
         'Or in Google Ads: **Admin → Access and security → Managers** → accept the request from **Fat Tail Ads**.',
       ],
-      ftaAction: 'Send a manager link request from the FTA MCC to this customer ID.',
+      ftaAction: `Send a manager link request from the FTA MCC (${id.googleAdsMcc}) to this customer ID.`,
     },
     ga4: {
       label: 'Google Analytics 4', group: 'Google', role: 'Editor', mechanism: 'guided',
