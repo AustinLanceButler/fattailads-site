@@ -93,9 +93,12 @@ function apiErrorMessage(resp) {
 }
 
 // ── Accounts the signed-in client can see ─────────────────────────────────────
-// Each account carries `canGrant`: whether this Google user can manage users there
-// (i.e. is an administrator). Listing users is the cheapest probe — Google only
-// allows it to people who could also add one. Grantable accounts sort first.
+// GA4 accounts carry `canGrant`: false only when Google explicitly refuses (403) to
+// list users there, i.e. the person isn't an administrator. Throttling or other
+// errors leave it true, and the grant call is the final check. Grantable first.
+// GTM gets no per-account probing: the Tag Manager API allows only ~25 requests
+// per 100 seconds per project, so fanning out across accounts gets throttled
+// and misreports admins. GTM admin rights are checked at grant time instead.
 
 async function mapLimit(items, limit, fn) {
   const out = new Array(items.length);
@@ -127,22 +130,16 @@ export async function listAccounts(product, token) {
     } while (pageToken);
     await mapLimit(out, 8, async (a) => {
       const probe = await gapi(token, `https://analyticsadmin.googleapis.com/v1alpha/accounts/${a.id}/accessBindings?pageSize=1`);
-      a.canGrant = probe.ok;
+      a.canGrant = probe.status !== 403;
     });
     return grantableFirst(out);
   }
   if (product === 'gtm') {
     const r = await gapi(token, 'https://tagmanager.googleapis.com/tagmanager/v2/accounts');
     if (!r.ok) throw Object.assign(new Error(apiErrorMessage(r)), { status: r.status });
-    const accounts = await mapLimit(r.body.account || [], 8, async (a) => {
-      const [c, probe] = await Promise.all([
-        gapi(token, `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${a.accountId}/containers`),
-        gapi(token, `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${a.accountId}/user_permissions`),
-      ]);
-      const n = c.ok ? (c.body.container || []).length : 0;
-      return { id: String(a.accountId), name: a.name, detail: `${n} ${n === 1 ? 'container' : 'containers'}`, canGrant: probe.ok };
-    });
-    return grantableFirst(accounts);
+    return (r.body.account || [])
+      .map((a) => ({ id: String(a.accountId), name: a.name, detail: 'Tag Manager account', canGrant: true }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
   throw new Error(`unknown product ${product}`);
 }
