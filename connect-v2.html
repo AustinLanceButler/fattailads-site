@@ -466,7 +466,7 @@ footer.bot .wrap {
     <!-- Step 3: Done -->
     <section class="wizard-step" id="step-3" data-step="3">
       <h2 class="step-title">You&rsquo;re all set.</h2>
-      <p class="step-sub">Thanks! Your part is done. We&rsquo;ll confirm each connection on our side and email you if anything needs another look.</p>
+      <p class="step-sub">Thanks! Your part is done. We&rsquo;ll confirm each connection on our side and get in touch if anything needs another look.</p>
       <ul class="done-list" id="done-list"></ul>
       <div class="start-over-wrap"><button type="button" class="btn-text" id="btn-start-over-3">Start over</button></div>
     </section>
@@ -590,7 +590,7 @@ footer.bot .wrap {
       el.classList.toggle('done', s < n);
     });
     announce('Step ' + n + ' of 3');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (n > 1) document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ── Step 1 ─────────────────────────────────────────────
