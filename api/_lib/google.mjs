@@ -30,12 +30,16 @@ export function receivingEmail() {
   return (process.env.CONNECT_RECEIVING_EMAIL || 'austin@fattailads.com').toLowerCase();
 }
 
+// Admin sign-in (product 'admin') asks only for identity.
+export const ADMIN_SCOPES = ['openid', 'email'];
+
 export function authUrl({ redirectUri, product, state, codeChallenge }) {
+  const scopes = product === 'admin' ? ADMIN_SCOPES : PRODUCTS[product].scopes;
   const p = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID || '',
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: PRODUCTS[product].scopes.join(' '),
+    scope: scopes.join(' '),
     access_type: 'online',
     include_granted_scopes: 'false',
     prompt: 'select_account',
@@ -66,6 +70,13 @@ export async function exchangeCode({ code, redirectUri, codeVerifier }) {
     throw err;
   }
   return { accessToken: j.access_token, expiresIn: j.expires_in || 3600, scope: j.scope || '' };
+}
+
+// Verified email of the signed-in Google user (admin sign-in only).
+export async function fetchVerifiedEmail(token) {
+  const r = await gapi(token, 'https://openidconnect.googleapis.com/v1/userinfo');
+  if (!r.ok || !r.body.email || r.body.email_verified !== true) return '';
+  return String(r.body.email).toLowerCase();
 }
 
 // Best-effort: invalidate the client's token once we're done with it.

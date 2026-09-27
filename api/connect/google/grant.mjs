@@ -7,7 +7,7 @@
 import { db, audit } from '../../_lib/db.mjs';
 import { allowMethods, clearCookie, isUuid, readBody, sameOrigin, sendError, sendJson } from '../../_lib/http.mjs';
 import { PRODUCTS, grantAndVerify, listAccounts, revokeToken } from '../../_lib/google.mjs';
-import { sendConnectCompleted } from '../../_lib/ga4.mjs';
+import { maybeFireCompleted } from '../../_lib/completion.mjs';
 import { COOKIE_PATH, TOKEN_COOKIE, readToken } from '../../_lib/google-session.mjs';
 
 export default async function handler(req, res) {
@@ -45,6 +45,10 @@ export default async function handler(req, res) {
     await audit(requestId, 'grant_attempted', { product, accountId, status: result.status, trace: result.trace });
 
     if (ok) {
+      // A GTM invitation still needs FTA to accept it in Tag Manager.
+      if (result.status === 'invited') {
+        await q`UPDATE connect_items SET fta_status = 'todo', fta_updated_at = now() WHERE id = ${item.id}`;
+      }
       await revokeToken(token);
       clearCookie(res, TOKEN_COOKIE, COOKIE_PATH);
       await maybeFireCompleted(q, requestId);
@@ -55,28 +59,5 @@ export default async function handler(req, res) {
     console.error('[connect/google/grant]', err.status, err.message);
     if (err.status === 401) return sendError(res, 401, 'session_expired', 'Your Google sign-in expired. Please sign in again.');
     return sendError(res, 500, 'server_error', 'Something went wrong — please try again.');
-  }
-}
-
-async function maybeFireCompleted(q, requestId) {
-  const pending = await q`SELECT 1 FROM connect_items WHERE request_id = ${requestId}
-                          AND status NOT IN ('verified', 'already_had_access', 'invited') LIMIT 1`;
-  if (pending.length) return;
-  // Claim the send atomically so concurrent grants can't double-fire.
-  const [r] = await q`UPDATE connect_requests SET status = 'complete', ga4_fired_at = now()
-                      WHERE id = ${requestId} AND ga4_fired_at IS NULL
-                      RETURNING client_name, company, is_test`;
-  if (!r) return;
-  const [{ n }] = await q`SELECT count(*)::int AS n FROM connect_items WHERE request_id = ${requestId}`;
-  if (r.is_test) {
-    await audit(requestId, 'completed_test_no_ga4', { assets: n });
-    return;
-  }
-  try {
-    const out = await sendConnectCompleted({ clientName: r.client_name, requestName: r.company, accessLevel: 'manage', assetsConnected: n });
-    await audit(requestId, 'ga4_connect_completed', out);
-  } catch (err) {
-    console.error('[connect] GA4 forward failed:', err.message);
-    await audit(requestId, 'ga4_connect_completed_failed', { message: err.message });
   }
 }

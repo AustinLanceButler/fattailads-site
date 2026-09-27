@@ -18,9 +18,15 @@ copyFileSync('connect.html', 'dist/connect/index.html');
 // /connect itself still embeds Leadsie until cutover.
 mkdirSync('dist/connect/beta', { recursive: true });
 copyFileSync('connect-beta.html', 'dist/connect/beta/index.html');
+// Phase 1 client-access wizard (all platforms, agency + guided) → /connect/v2 (unlisted, noindex),
+// and the admin dashboard → /connect/admin (noindex, frame-denied via vercel.json).
+mkdirSync('dist/connect/v2', { recursive: true });
+copyFileSync('connect-v2.html', 'dist/connect/v2/index.html');
+mkdirSync('dist/connect/admin', { recursive: true });
+copyFileSync('connect-admin.html', 'dist/connect/admin/index.html');
 // Standalone legal pages → /privacy and /terms (crawlable; linked from the site footer).
 mkdirSync('dist/privacy', { recursive: true });
 copyFileSync('privacy.html', 'dist/privacy/index.html');
 mkdirSync('dist/terms', { recursive: true });
 copyFileSync('terms.html', 'dist/terms/index.html');
-console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,privacy,terms}/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,connect/v2,connect/admin,privacy,terms}/index.html');

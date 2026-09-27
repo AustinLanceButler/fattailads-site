@@ -2,6 +2,7 @@
 
 import { db } from '../_lib/db.mjs';
 import { allowMethods, isUuid, sendError, sendJson } from '../_lib/http.mjs';
+import { CLIENT_DONE } from '../_lib/platforms.mjs';
 
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['GET'])) return;
@@ -13,10 +14,9 @@ export default async function handler(req, res) {
     const items = await q`SELECT product, status, asset_name, detail FROM connect_items
                           WHERE request_id = ${requestId} ORDER BY id`;
     if (!items.length) return sendError(res, 404, 'not_found', 'Unknown request.');
-    const done = (s) => s === 'verified' || s === 'already_had_access' || s === 'invited';
     return sendJson(res, {
       items: items.map((i) => ({ product: i.product, status: i.status, assetName: i.asset_name || '', detail: i.detail || '' })),
-      complete: items.every((i) => done(i.status)),
+      complete: items.every((i) => CLIENT_DONE.includes(i.status)),
     });
   } catch (err) {
     console.error('[connect/status]', err);
