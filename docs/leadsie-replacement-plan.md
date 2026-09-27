@@ -57,6 +57,9 @@ Legend: **Agency-side** = FTA's own credentials do the grant or send the invite;
 
 Consequence: one-click Google Ads is also viable. The client signs in, the app lists their customers (`ListAccessibleCustomers`), FTA's MCC sends the link, and the client's token sets the `CustomerManagerLink` to ACTIVE in the same session. Doing this needs Google Ads API access (Explorer) on the new project. It's added to Phase 2 as an option.
 
+
+**Update 2026-09-27: live tests of the Google flow.** GA4 passed (grant is immediate; confirmed in GA4 Account access management). **GTM correction:** `user_permissions.create` returns 200 but GTM stores an **invitation** ("Invitation pending") that the receiving user must accept in the Tag Manager UI. The API's list and get omit it until then, and there is no API accept. The tool reports `invited`, and Phase 1 needs an FTA-side "accept pending GTM invitations" step or reminder, like Merchant Center's. Also, the Tag Manager API allows only about 25 requests per 100 seconds per project, so there is no per-account fan-out when listing.
+
 ### Citations
 - **Google Ads:** [linking manager accounts](https://developers.google.com/google-ads/api/docs/account-management/linking-manager-accounts) · [access levels](https://developers.google.com/google-ads/api/docs/api-policy/access-levels) · [developer token retirement](https://developers.google.com/google-ads/api/docs/api-policy/developer-token) · [brand verification](https://developers.google.com/google-ads/api/docs/api-policy/brand-verification) · [security requirements / restricted scope](https://developers.google.com/google-ads/api/docs/oauth/security-requirements) · [link accept (Help)](https://support.google.com/google-ads/answer/7459601)
 - **GA4:** [accessBindings.create (v1alpha)](https://developers.google.com/analytics/devguides/config/admin/v1/rest/v1alpha/accounts.accessBindings/create)
