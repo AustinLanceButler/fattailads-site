@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     }
 
     const result = await grantAndVerify(product, token, accountId);
-    const ok = result.status === 'verified' || result.status === 'already_had_access';
+    const ok = result.status === 'verified' || result.status === 'already_had_access' || result.status === 'invited';
     await q`UPDATE connect_items SET status = ${result.status}, asset_id = ${accountId}, asset_name = ${account.name},
                    detail = ${result.detail || null}, verified_at = ${ok ? new Date().toISOString() : null}, updated_at = now()
             WHERE id = ${item.id}`;
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 
 async function maybeFireCompleted(q, requestId) {
   const pending = await q`SELECT 1 FROM connect_items WHERE request_id = ${requestId}
-                          AND status NOT IN ('verified', 'already_had_access') LIMIT 1`;
+                          AND status NOT IN ('verified', 'already_had_access', 'invited') LIMIT 1`;
   if (pending.length) return;
   // Claim the send atomically so concurrent grants can't double-fire.
   const [r] = await q`UPDATE connect_requests SET status = 'complete', ga4_fired_at = now()
