@@ -93,6 +93,23 @@ function apiErrorMessage(resp) {
 }
 
 // ── Accounts the signed-in client can see ─────────────────────────────────────
+// Each account carries `canGrant`: whether this Google user can manage users there
+// (i.e. is an administrator). Listing users is the cheapest probe — Google only
+// allows it to people who could also add one. Grantable accounts sort first.
+
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k]); }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+function grantableFirst(accounts) {
+  return accounts.sort((a, b) => Number(b.canGrant) - Number(a.canGrant) || a.name.localeCompare(b.name));
+}
 
 export async function listAccounts(product, token) {
   if (product === 'ga4') {
@@ -108,17 +125,24 @@ export async function listAccounts(product, token) {
       }
       pageToken = r.body.nextPageToken || '';
     } while (pageToken);
-    return out;
+    await mapLimit(out, 8, async (a) => {
+      const probe = await gapi(token, `https://analyticsadmin.googleapis.com/v1alpha/accounts/${a.id}/accessBindings?pageSize=1`);
+      a.canGrant = probe.ok;
+    });
+    return grantableFirst(out);
   }
   if (product === 'gtm') {
     const r = await gapi(token, 'https://tagmanager.googleapis.com/tagmanager/v2/accounts');
     if (!r.ok) throw Object.assign(new Error(apiErrorMessage(r)), { status: r.status });
-    const accounts = r.body.account || [];
-    return Promise.all(accounts.map(async (a) => {
-      const c = await gapi(token, `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${a.accountId}/containers`);
+    const accounts = await mapLimit(r.body.account || [], 8, async (a) => {
+      const [c, probe] = await Promise.all([
+        gapi(token, `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${a.accountId}/containers`),
+        gapi(token, `https://tagmanager.googleapis.com/tagmanager/v2/accounts/${a.accountId}/user_permissions`),
+      ]);
       const n = c.ok ? (c.body.container || []).length : 0;
-      return { id: String(a.accountId), name: a.name, detail: `${n} ${n === 1 ? 'container' : 'containers'}` };
-    }));
+      return { id: String(a.accountId), name: a.name, detail: `${n} ${n === 1 ? 'container' : 'containers'}`, canGrant: probe.ok };
+    });
+    return grantableFirst(accounts);
   }
   throw new Error(`unknown product ${product}`);
 }
