@@ -653,12 +653,14 @@ footer.bot .wrap {
   var productListEl = document.getElementById('product-list');
 
   function pillClass(status) {
+    if (status === 'invited') return 'pill connected';
     if (status === 'verified' || status === 'already_had_access') return 'pill connected';
     if (status === 'failed') return 'pill attention';
     if (status === 'pending') return 'pill pending';
     return 'pill not-connected';
   }
   function pillLabel(status) {
+    if (status === 'invited') return 'Invitation sent ✓';
     if (status === 'verified' || status === 'already_had_access') return 'Connected ✓';
     if (status === 'failed') return 'Needs attention';
     if (status === 'pending') return 'Pending';
@@ -715,7 +717,7 @@ footer.bot .wrap {
           }
           if (btn) {
             btn.disabled = false;
-            btn.textContent = (item.status === 'verified' || item.status === 'already_had_access') ? 'Reconnect' : 'Continue with Google';
+            btn.textContent = (item.status === 'verified' || item.status === 'already_had_access' || item.status === 'invited') ? 'Reconnect' : 'Continue with Google';
           }
         });
         if (data.complete) {
@@ -840,10 +842,12 @@ footer.bot .wrap {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ request: requestId, product: product, accountId: accountId })
     }).then(function (data) {
-      if (data.status === 'verified' || data.status === 'already_had_access') {
+      if (data.status === 'verified' || data.status === 'already_had_access' || data.status === 'invited') {
         var line = data.status === 'verified'
           ? 'Done — Fat Tail Ads now has ' + (PRODUCT_META[product] ? PRODUCT_META[product].access : 'access') + ' to ' + escapeHtml(data.assetName) + '.'
-          : 'Fat Tail Ads already had access to ' + escapeHtml(data.assetName) + ' — nothing to change.';
+          : data.status === 'invited'
+            ? 'Done — Google sent Fat Tail Ads an invitation to ' + escapeHtml(data.assetName) + '. We&rsquo;ll accept it on our side; nothing more is needed from you.'
+            : 'Fat Tail Ads already had access to ' + escapeHtml(data.assetName) + ' — nothing to change.';
         statusSlot.innerHTML = '<div class="status-line success">' + line + '</div>' +
           '<div class="actions"><button type="button" class="btn-primary" id="btn-back-checklist">Back to your checklist</button></div>';
         document.getElementById('btn-back-checklist').addEventListener('click', function () {
@@ -885,7 +889,7 @@ footer.bot .wrap {
   function renderDone(items) {
     var list = document.getElementById('done-list');
     list.innerHTML = (items || []).filter(function (item) {
-      return item.status === 'verified' || item.status === 'already_had_access';
+      return item.status === 'verified' || item.status === 'already_had_access' || item.status === 'invited';
     }).map(function (item) {
       var meta = PRODUCT_META[item.product] || { name: item.product };
       return '<li><span class="check">✓</span> ' + escapeHtml(meta.name) + (item.assetName ? ' — ' + escapeHtml(item.assetName) : '') + '</li>';

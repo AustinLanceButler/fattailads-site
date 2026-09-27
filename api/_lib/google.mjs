@@ -145,7 +145,7 @@ export async function listAccounts(product, token) {
 }
 
 // ── Grant + read-back verification ────────────────────────────────────────────
-// Returns { status: 'verified' | 'already_had_access' | 'failed', detail, trace }.
+// Returns { status: 'verified' | 'already_had_access' | 'invited' | 'failed', detail, trace }.
 // `trace` records each Google call's HTTP status and error text (never tokens)
 // for the audit log. The read-back retries briefly: listings can lag a write,
 // and the Tag Manager API throttles aggressively.
@@ -202,6 +202,13 @@ export async function grantAndVerify(product, token, accountId) {
     if (!created.ok && !already) return { status: 'failed', detail: grantFailureMessage(created, 'Tag Manager'), trace };
     const found = await readBack(trace, 'list_permissions', () => gapi(token, `${base}/user_permissions`),
       (b) => (b.userPermission || []).some((u) => String(u.emailAddress || '').toLowerCase() === email));
+    // GTM often creates an *invitation* the receiving user must accept; the API's list
+    // omits pending invites. A 2xx create that echoes our email + a permission path is
+    // a sent invitation — the client's part is done, FTA accepts on its side.
+    const createdEmail = String((created.body && created.body.emailAddress) || '').toLowerCase();
+    if (!found && created.ok && createdEmail === email && created.body.path) {
+      return { status: 'invited', detail: '', trace };
+    }
     if (!found) return { status: 'failed', detail: 'Access was requested but could not be confirmed. Please try again.', trace };
     return { status: already ? 'already_had_access' : 'verified', detail: '', trace };
   }
