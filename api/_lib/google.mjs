@@ -154,7 +154,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function step(trace, name, resp) {
   const e = resp.body && resp.body.error;
-  trace.push({ step: name, status: resp.status, ...(e ? { error: String(e.message || e.status || '').slice(0, 300) } : {}) });
+  const b = resp.body || {};
+  // Echo only identifying, non-secret fields Google returns for the resource.
+  const echo = {};
+  for (const k of ['name', 'path', 'user', 'emailAddress', 'accountAccess', 'containerAccess', 'roles']) if (b[k] !== undefined) echo[k] = b[k];
+  if (Array.isArray(b.userPermission)) echo.listed = b.userPermission.map((u) => u.emailAddress);
+  if (Array.isArray(b.accessBindings)) echo.listed = b.accessBindings.map((x) => x.user);
+  trace.push({ step: name, status: resp.status, ...(e ? { error: String(e.message || e.status || '').slice(0, 300) } : {}), ...(Object.keys(echo).length ? { echo } : {}) });
   return resp;
 }
 
