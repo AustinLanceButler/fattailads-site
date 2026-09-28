@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.refresh_token) {
       await audit(null, 'fta_google_failed', { admin, error: j.error || r.status, hasRefresh: !!j.refresh_token });
-      return back(res, { fta: 'google_failed' });
+      return back(res, { fta: j.error === 'invalid_client' ? 'google_client' : 'google_failed' });
     }
     const email = await fetchVerifiedEmail(j.access_token);
     if (email !== receivingEmail()) {
