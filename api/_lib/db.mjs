@@ -62,6 +62,17 @@ export async function db() {
       await q`ALTER TABLE connect_items ADD COLUMN IF NOT EXISTS fta_updated_at timestamptz`;
       // Admin sign-in reuses the OAuth state table with no request attached.
       await q`ALTER TABLE connect_oauth_states ALTER COLUMN request_id DROP NOT NULL`;
+      // FTA-side OAuth refresh tokens (never client tokens), AES-GCM sealed per provider.
+      await q`CREATE TABLE IF NOT EXISTS connect_fta_credentials (
+        provider text PRIMARY KEY,
+        identity text NOT NULL,
+        sealed_refresh text NOT NULL,
+        scopes text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        last_ok_at timestamptz,
+        last_error text
+      )`;
       await q`CREATE TABLE IF NOT EXISTS connect_audit_log (
         id bigserial PRIMARY KEY,
         ts timestamptz NOT NULL DEFAULT now(),

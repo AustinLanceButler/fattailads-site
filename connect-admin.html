@@ -70,6 +70,18 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
     <h1>Client access</h1>
     <p class="sub">Follow-ups FTA owes, oldest first, then every recent request. Test requests are marked.</p>
 
+    <h2>FTA connections</h2>
+    <p class="sub">FTA&rsquo;s own sign-ins, used to send link requests and verify grants. Client tokens are never stored.</p>
+    <div class="card"><table>
+      <thead><tr><th>Provider</th><th>Signed in as</th><th>Status</th><th></th></tr></thead>
+      <tbody id="fta-body"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+    </table></div>
+    <div id="ms-device" style="display:none;margin-top:12px;" class="card"><div class="empty">
+      Go to <a id="ms-link" href="https://microsoft.com/devicelogin" target="_blank" rel="noopener">microsoft.com/devicelogin</a>, enter
+      <code id="ms-code" style="font-size:16px;"></code>, and sign in as <strong>austin@fattailads.com</strong> (the Fat Tail Ads manager account&rsquo;s Super Admin).
+      <div class="small" id="ms-state" style="margin-top:6px;">Waiting for you to finish signing in…</div>
+    </div></div>
+
     <h2>Follow-ups <span class="mono" id="todo-count"></span></h2>
     <div class="card"><table>
       <thead><tr><th>Client</th><th>Platform</th><th>What they gave us</th><th>FTA to do</th></tr></thead>
@@ -135,6 +147,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
         '<td>' + inputText(i) + '</td>' +
         '<td>' + esc(i.ftaAction) + (i.fta_note ? '<div class="small">Note: ' + esc(i.fta_note) + '</div>' : '') +
           '<div class="row-actions">' +
+            (agency ? '<button data-act="send-link">' + (i.status === 'invite_sent' ? 'Re-check link' : 'Send link') + '</button>' : '') +
             (agency && i.status === 'requested' ? '<button data-act="sent">Mark link sent</button>' : '') +
             '<button class="primary" data-act="done">Mark verified</button>' +
             '<button data-act="failed">Failed…</button>' +
@@ -165,6 +178,12 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
           if (note === null) return;
         }
         btn.disabled = true;
+        if (act === 'send-link') {
+          api('send-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) })
+            .then(function (r) { load().then(function () { if (r.detail) showError(r.status + ': ' + r.detail); }); })
+            .catch(function (e) { showError(e.message); btn.disabled = false; });
+          return;
+        }
         api('item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, action: act, note: note }) })
           .then(load)
           .catch(function (e) { showError(e.message); btn.disabled = false; });
@@ -172,8 +191,66 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
     });
   }
 
+  var FTA_LABEL = { google: 'Google (Ads, GA4, GTM, Search Console, Merchant, GBP)', microsoft: 'Microsoft Advertising' };
+  var FTA_MSG = {
+    google_ok: 'Google connected.', google_partial: 'Google connected, but some permissions were left unticked. Connect again and tick every box.',
+    google_denied: 'Google sign-in was cancelled.', google_state: 'That sign-in expired. Try again.',
+    google_failed: 'Google didn’t return a refresh token. Try again.', google_wrong_identity: 'Sign in as austin@fattailads.com, not another account.'
+  };
+  function loadFta() {
+    return api('fta').then(function (d) {
+      var rows = {};
+      (d.credentials || []).forEach(function (c) { rows[c.provider] = c; });
+      document.getElementById('fta-body').innerHTML = ['google', 'microsoft'].map(function (p) {
+        var c = rows[p], configured = d.configured && d.configured[p];
+        var status = !configured ? '<span class="pill bad">Not configured</span>'
+          : !c ? '<span class="pill todo">Not connected</span>'
+          : c.last_error ? '<span class="pill bad">Error</span><div class="small">' + esc(c.last_error) + '</div>'
+          : '<span class="pill ok">Connected</span><div class="small">last OK ' + esc(fmt(c.last_ok_at)) + '</div>';
+        return '<tr data-provider="' + p + '"><td>' + esc(FTA_LABEL[p]) + '</td><td>' + esc(c ? c.identity : '—') + '</td><td>' + status + '</td><td>' +
+          (configured ? '<button class="primary" data-fta="connect">' + (c ? 'Reconnect' : 'Connect') + '</button>' : '') +
+          (c ? ' <button data-fta="check">Test</button>' : '') + '</td></tr>';
+      }).join('');
+      document.querySelectorAll('#fta-body [data-fta]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var p = btn.closest('tr').getAttribute('data-provider');
+          if (btn.getAttribute('data-fta') === 'check') {
+            btn.disabled = true;
+            api('fta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: p }) })
+              .then(function (r) { showError(r.ok ? '' : 'Test failed: ' + r.error); return loadFta(); })
+              .catch(function (e) { showError(e.message); btn.disabled = false; });
+          } else if (p === 'google') {
+            location.href = API + 'fta-google';
+          } else {
+            startMsDevice(btn);
+          }
+        });
+      });
+    });
+  }
+  function startMsDevice(btn) {
+    btn.disabled = true;
+    api('fta-microsoft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"action":"start"}' }).then(function (d) {
+      document.getElementById('ms-device').style.display = 'block';
+      document.getElementById('ms-code').textContent = d.userCode;
+      document.getElementById('ms-link').href = d.verificationUri;
+      var deadline = Date.now() + d.expiresIn * 1000;
+      (function poll() {
+        if (Date.now() > deadline) { document.getElementById('ms-state').textContent = 'The code expired. Click Connect again.'; btn.disabled = false; return; }
+        setTimeout(function () {
+          api('fta-microsoft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"action":"poll"}' }).then(function (r) {
+            if (r.pending) return poll();
+            document.getElementById('ms-state').textContent = 'Connected as ' + r.identity + '.';
+            loadFta();
+          }).catch(function (e) { document.getElementById('ms-state').textContent = e.message; btn.disabled = false; });
+        }, (d.interval || 5) * 1000);
+      }());
+    }).catch(function (e) { showError(e.message); btn.disabled = false; });
+  }
+
   function load() {
     showError('');
+    loadFta().catch(function () {});
     return api('requests').then(function (data) {
       document.getElementById('signed-out').style.display = 'none';
       document.getElementById('app').style.display = 'block';
@@ -188,6 +265,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
 
   var qs = new URLSearchParams(location.search);
   if (qs.get('error') === 'not_allowed') showError('That Google account isn’t allowed to use the admin.');
+  var ftaMsg = FTA_MSG[qs.get('fta')];
   if (qs.toString()) history.replaceState(null, '', location.pathname);
 
   document.getElementById('btn-login').addEventListener('click', function () { location.href = API + 'login'; });
@@ -195,7 +273,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
   document.getElementById('btn-logout').addEventListener('click', function () {
     api('logout', { method: 'POST' }).then(function () { location.reload(); });
   });
-  load();
+  load().then(function () { if (ftaMsg) showError(ftaMsg); });
 }());
 </script>
 </body>
