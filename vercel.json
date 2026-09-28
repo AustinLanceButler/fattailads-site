@@ -23,5 +23,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/verify",
+      "schedule": "*/15 * * * *"
+    }
   ]
 }
