@@ -5,11 +5,29 @@
     {
       "source": "/connect/admin(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Referrer-Policy", "value": "same-origin" },
-        { "key": "Cache-Control", "value": "no-store" }
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
       ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/verify",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

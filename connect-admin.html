@@ -147,6 +147,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
         '<td>' + inputText(i) + '</td>' +
         '<td>' + esc(i.ftaAction) + (i.fta_note ? '<div class="small">Note: ' + esc(i.fta_note) + '</div>' : '') +
           '<div class="row-actions">' +
+            (agency ? '<button data-act="send-link">' + (i.status === 'invite_sent' ? 'Re-check link' : 'Send link') + '</button>' : '') +
             (agency && i.status === 'requested' ? '<button data-act="sent">Mark link sent</button>' : '') +
             '<button class="primary" data-act="done">Mark verified</button>' +
             '<button data-act="failed">Failed…</button>' +
@@ -177,6 +178,12 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
           if (note === null) return;
         }
         btn.disabled = true;
+        if (act === 'send-link') {
+          api('send-link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) })
+            .then(function (r) { load().then(function () { if (r.detail) showError(r.status + ': ' + r.detail); }); })
+            .catch(function (e) { showError(e.message); btn.disabled = false; });
+          return;
+        }
         api('item', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, action: act, note: note }) })
           .then(load)
           .catch(function (e) { showError(e.message); btn.disabled = false; });
