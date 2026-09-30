@@ -195,7 +195,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
   var FTA_MSG = {
     google_ok: 'Google connected.', google_partial: 'Google connected, but some permissions were left unticked. Connect again and tick every box.',
     google_denied: 'Google sign-in was cancelled.', google_state: 'That sign-in expired. Try again.',
-    google_failed: 'Google didn’t return a refresh token. Try again.', google_client: 'Google rejected the client credentials (invalid_client): FTA_GOOGLE_CLIENT_SECRET doesn’t match the ops-project client, or a new secret hasn’t propagated yet.', google_wrong_identity: 'Sign in as austin@fattailads.com, not another account.'
+    google_failed: 'Google didn’t return a refresh token. Try again.', ms_ok: 'Microsoft Advertising connected.', ms_denied: 'Microsoft sign-in was cancelled or refused.', ms_state: 'That Microsoft sign-in expired. Try again.', ms_failed: 'Microsoft didn’t return a refresh token. Try again.', google_client: 'Google rejected the client credentials (invalid_client): FTA_GOOGLE_CLIENT_SECRET doesn’t match the ops-project client, or a new secret hasn’t propagated yet.', google_wrong_identity: 'Sign in as austin@fattailads.com, not another account.'
   };
   function loadFta() {
     return api('fta').then(function (d) {
@@ -222,7 +222,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
           } else if (p === 'google') {
             location.href = API + 'fta-google';
           } else {
-            startMsDevice(btn);
+            location.href = API + 'fta-microsoft-oauth';
           }
         });
       });
