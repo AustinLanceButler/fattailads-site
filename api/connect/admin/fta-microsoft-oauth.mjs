@@ -36,7 +36,7 @@ export default async function handler(req, res) {
   if (!qs.code && !qs.error) {
     const state = randomToken(32);
     const verifier = randomToken(48);
-    setCookie(res, COOKIE, seal({ s: state, v: verifier, exp: Date.now() + 600000 }, AAD), { maxAge: 600, path: ADMIN_COOKIE_PATH });
+    setCookie(res, COOKIE, seal({ s: state, v: verifier, exp: Date.now() + 1800000 }, AAD), { maxAge: 1800, path: ADMIN_COOKIE_PATH });
     const p = new URLSearchParams({
       client_id: msClientId(),
       redirect_uri: redirectUri,
