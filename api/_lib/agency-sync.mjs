@@ -26,6 +26,11 @@ export async function syncAgencyItem(q, item, { clientName = '', actor = 'system
     await q`UPDATE connect_items SET status = 'invite_sent', fta_status = 'todo', fta_note = ${result.detail || null},
               fta_updated_at = now(), updated_at = now()
             WHERE id = ${item.id}`;
+  } else if (result.status === 'failed' && item.status === 'requested') {
+    // A refused SEND is FTA's problem (API access level, config, a bad ID to double-check):
+    // keep the client's status untouched and put the reason in the admin queue only.
+    await q`UPDATE connect_items SET status = 'requested', detail = null, fta_status = 'todo', fta_note = ${result.detail}, fta_updated_at = now(), updated_at = now()
+            WHERE id = ${item.id}`;
   } else if (result.status === 'failed') {
     await q`UPDATE connect_items SET status = 'failed', detail = ${result.detail}, fta_status = 'todo',
               fta_note = ${result.detail}, fta_updated_at = now(), updated_at = now()
