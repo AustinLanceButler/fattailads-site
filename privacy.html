@@ -264,7 +264,7 @@ footer.bot .wrap {
     <h1 class="h1legal">Privacy policy.</h1>
     <p class="lede">How Fat Tail Ads collects, uses, and protects information &mdash; written to be read, not to be hidden behind.</p>
     <div class="meta-line">
-      <span>Last updated &middot; September 25, 2026</span>
+      <span>Last updated &middot; October 2, 2026</span>
       <span>Fat Tail Ads, LLC &middot; Florida, USA</span>
     </div>
   </section>
@@ -448,15 +448,47 @@ footer.bot .wrap {
 
         <section id="s11" class="legal-section">
           <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;11</span><span>Google user data</span></h2>
-          <p class="legal-p">When you sign in with Google to grant access, Fat Tail Ads requests only the specific permissions needed to add our team to the Google products you select (for example, managing users on a Google Analytics account or Google Tag Manager container). We use that access solely to create the user permission you approved and to confirm it succeeded.</p>
-          <p class="legal-p">Fat Tail Ads' use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+          <p class="legal-p">This section explains exactly which Google user data our client-access and account-management tool, <a href="/connect/about">FTA Connect</a>, accesses, why, and how we handle it. It covers two ways Google data reaches us.</p>
+
+          <h3 class="legal-sub">1. Clients who sign in with Google to grant access</h3>
+          <p class="legal-p">On fattailads.com/connect, a client may sign in with Google and approve specific permissions so the tool can add our team to the Google products they select:</p>
           <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span><strong>Google Analytics</strong> (<code>analytics.readonly</code>, <code>analytics.manage.users</code>) &mdash; we list the Analytics accounts the client can see, so they can pick one, then add Fat Tail Ads as a user on that account.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Google Tag Manager</strong> (<code>tagmanager.readonly</code>, <code>tagmanager.manage.users</code>) &mdash; we list the client's Tag Manager accounts and containers, then invite Fat Tail Ads as a user.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>The client's sign-in token is used only during that session to create the access they approved, is never written to our database, and is revoked and discarded once the grant is made. We keep only the account name and ID they chose and the result of the grant.</span></li>
+          </ul>
+
+          <h3 class="legal-sub">2. Fat Tail Ads' own Google account</h3>
+          <p class="legal-p">Our staff connect Fat Tail Ads' own Google account to FTA Connect so it can request and confirm access to the accounts clients ask us to manage. Through that account the tool uses:</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span><strong>Google Ads API</strong> (<code>adwords</code>) &mdash; to send manager-link requests from our manager account to the Google Ads customer IDs clients give us, and to read whether each link was accepted. We read link status only; this tool does not copy campaign, keyword, audience, or performance data.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Google Analytics Admin API</strong> (<code>analytics.readonly</code>) &mdash; to confirm a client's Analytics account is now visible to our team (account names and IDs).</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Tag Manager API</strong> (<code>tagmanager.readonly</code>) &mdash; to confirm access to a client's Tag Manager account and containers (names and IDs).</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Search Console API</strong> (<code>webmasters.readonly</code>) &mdash; to confirm a client's site property is shared with us and at what permission level.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Merchant API</strong> (<code>content</code>) &mdash; to confirm access to a client's Merchant Center account and to see pending access invitations for our team.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Business Profile APIs</strong> (<code>business.manage</code>) &mdash; to list and accept manager invitations a client sent us and confirm access to their locations.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Sign in with Google</strong> (<code>openid</code>, <code>email</code>) &mdash; to identify which Fat Tail Ads staff member is signed in to the private admin console.</span></li>
+          </ul>
+
+          <h3 class="legal-sub">How we store, protect, and retain Google data</h3>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>We store only what is needed to track access requests: account names and IDs, the access level, status, and dates, plus an audit log of each action.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Fat Tail Ads' own Google refresh token is encrypted at rest with AES-256-GCM and is only used server-side. Client tokens are never stored.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Request records are kept for the life of the client engagement and up to 24 months afterwards, then deleted. You can ask us to delete them sooner (see &sect;21).</span></li>
+          </ul>
+
+          <h3 class="legal-sub">Limited Use</h3>
+          <p class="legal-p">Fat Tail Ads' use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. In particular:</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span>We use Google user data only to provide the access features described above, which the client requested.</span></li>
             <li><span class="legal-mark">&#9670;</span><span>We do not use Google user data for advertising, and we do not sell it.</span></li>
             <li><span class="legal-mark">&#9670;</span><span>We do not transfer Google user data to others except as necessary to provide the access you requested, to comply with law, or as part of a merger or acquisition with notice to you.</span></li>
             <li><span class="legal-mark">&#9670;</span><span>We do not allow humans to read Google user data except with your consent, for security purposes, to comply with law, or when the data is aggregated and anonymized.</span></li>
-            <li><span class="legal-mark">&#9670;</span><span>We do not use Google user data to develop, improve, or train generalized AI or machine-learning models.</span></li>
-            <li><span class="legal-mark">&#9670;</span><span>You can revoke our app's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>We do not use Google user data to develop, improve, or train generalized AI or machine-learning models, and FTA Connect has no image or AI-generation features.</span></li>
           </ul>
+
+          <h3 class="legal-sub">Revoking access and deleting data</h3>
+          <p class="legal-p">You can revoke our app's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>, and remove Fat Tail Ads from any Google product in that product's user or manager-link settings. To have us delete the Google-related records we hold, email <a href="mailto:privacy@fattailads.com">privacy@fattailads.com</a>; we confirm deletion within 30 days.</p>
         </section>
 
         <section id="s12" class="legal-section">
