@@ -148,6 +148,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
         '<td>' + esc(i.ftaAction) + (i.fta_note ? '<div class="small">Note: ' + esc(i.fta_note) + '</div>' : '') +
           '<div class="row-actions">' +
             (agency ? '<button data-act="send-link">' + (i.status === 'invite_sent' ? 'Re-check link' : 'Send link') + '</button>' : '') +
+            (['ga4', 'gtm', 'search_console'].indexOf(i.product) !== -1 ? '<button data-act="send-link">Re-check</button>' : '') +
             (agency && i.status === 'requested' ? '<button data-act="sent">Mark link sent</button>' : '') +
             '<button class="primary" data-act="done">Mark verified</button>' +
             '<button data-act="failed">Failed…</button>' +
