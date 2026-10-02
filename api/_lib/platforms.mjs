@@ -64,7 +64,7 @@ function catalogue() {
         `Enter **${id.google}**, choose the **Editor** role, and click **Add**.`,
       ],
       link: 'https://analytics.google.com/analytics/web/#/admin',
-      fields: [{ key: 'accountName', label: 'GA4 account name', hint: 'Optional — helps us find it', check: text(160) }],
+      fields: [{ key: 'accountName', label: 'GA4 account name or ID', hint: 'Shown in Admin → Account settings. We use it to confirm access automatically.', required: true, check: text(160), error: 'Enter the GA4 account name or ID so we can confirm access.' }],
       ftaAction: 'Confirm the GA4 account shows up for austin@fattailads.com.',
     },
     gtm: {
@@ -76,7 +76,7 @@ function catalogue() {
         'Under **Container permissions**, give each container **Publish**, then click **Invite**.',
       ],
       link: 'https://tagmanager.google.com/',
-      fields: [{ key: 'accountName', label: 'GTM account or container ID', hint: 'Optional, like GTM-ABC1234', check: text(160) }],
+      fields: [{ key: 'accountName', label: 'GTM account name or container ID', hint: 'Like GTM-ABC1234. We use it to confirm access automatically.', required: true, check: text(160), error: 'Enter the Tag Manager account name or container ID (GTM-…).' }],
       ftaAction: 'Accept the pending invitation: Tag Manager → Invitations → Accept, signed in as austin@fattailads.com.',
     },
     search_console: {
