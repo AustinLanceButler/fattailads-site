@@ -245,3 +245,13 @@ Claude writes all the code on Austin's flat-rate Business plan, so its hours cos
 2. **Meta Business Verification:** Austin supplies the legal documents (LLC articles or EIN letter, a utility bill or bank statement matching the address).
 3. **Backup Meta admin:** who should it be?
 4. **Leadsie cancellation date:** set after Phase 1.
+
+
+**Update 2026-10-02: Google Ads agency link proven end to end, and the access-level correction.**
+- **Explorer is NOT enough** for agency links. `CustomerClientLink` create returns `DEVELOPER_TOKEN_NOT_APPROVED` ("not allowed for use with explorer access"), even though Google's list of Explorer-blocked services doesn't name it. The "Explorer covers link services" inference in §2 row 1 was wrong.
+- **Basic** is what's needed. Its prerequisite is **brand verification** of the Cloud project that owns the OAuth client (here the ops project, ga4-mcp-project-498920):
+  - Branding fully filled in; External; In production; no logo (a logo would force full app verification).
+  - The authorized domain must be verified in Search Console by a project Owner. Fixed by making the gmail an Owner of sc-domain:fattailads.com (then a 24-hour wait).
+  - The home page and privacy policy must explain the app and its Google data use. Fixed with the public /connect/about page, crawlable home-page text, and a rewritten privacy §11.
+  - With those in place, Verify branding passed in about 2 minutes. Then Publish branding, then Apply for Basic, which was granted instantly.
+- Live test: FTA MCC 673-311-0705 sent a link to test account 681-670-7992 through FTA Connect. The client accepted in Google Ads. FTA Connect's read-back marked the item **verified** automatically. The 15-minute cron is live.
