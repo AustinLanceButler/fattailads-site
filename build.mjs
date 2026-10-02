@@ -24,9 +24,13 @@ mkdirSync('dist/connect/v2', { recursive: true });
 copyFileSync('connect-v2.html', 'dist/connect/v2/index.html');
 mkdirSync('dist/connect/admin', { recursive: true });
 copyFileSync('connect-admin.html', 'dist/connect/admin/index.html');
+// Public page describing FTA Connect and its Google API use → /connect/about (crawlable;
+// the Google Cloud branding "home page" for the FTA ops app).
+mkdirSync('dist/connect/about', { recursive: true });
+copyFileSync('connect-about.html', 'dist/connect/about/index.html');
 // Standalone legal pages → /privacy and /terms (crawlable; linked from the site footer).
 mkdirSync('dist/privacy', { recursive: true });
 copyFileSync('privacy.html', 'dist/privacy/index.html');
 mkdirSync('dist/terms', { recursive: true });
 copyFileSync('terms.html', 'dist/terms/index.html');
-console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,connect/v2,connect/admin,privacy,terms}/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,connect/v2,connect/admin,connect/about,privacy,terms}/index.html');
