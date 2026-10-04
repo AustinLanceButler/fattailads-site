@@ -24,10 +24,20 @@
       ]
     }
   ],
+  "functions": {
+    "api/cron/*.mjs": { "maxDuration": 300 },
+    "api/admin/*.mjs": { "maxDuration": 300 }
+  },
   "crons": [
     {
       "path": "/api/cron/verify",
       "schedule": "*/15 * * * *"
-    }
+    },
+    { "path": "/api/cron/ingest-google", "schedule": "5 9,15,21 * * *" },
+    { "path": "/api/cron/ingest-microsoft", "schedule": "15 9,15,21 * * *" },
+    { "path": "/api/cron/ingest-meta", "schedule": "25 9,15,21 * * *" },
+    { "path": "/api/cron/push-sheets", "schedule": "50 9,15,21 * * *" },
+    { "path": "/api/cron/feed-health", "schedule": "30 10 * * *" },
+    { "path": "/api/cron/ingest-google-restate", "schedule": "5 11 * * 0" }
   ]
 }
