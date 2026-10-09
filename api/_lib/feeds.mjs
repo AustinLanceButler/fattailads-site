@@ -14,6 +14,9 @@
 //   blank          → empty cell
 // window_rule 'budgets_current' switches the source to ads.v_budget_pools_current
 // (columns: as_of, budget_key, name, is_shared, amount, live_campaigns).
+// source 'media_daily' reads ads.v_media_daily instead, one row per date × channel ×
+// market × tactic (columns: date, platform, account_id, channel, market, tactic,
+// spend, impressions, clicks, conversions, store_visits) — for dashboards.
 
 import { exec, listFeeds } from './warehouse.mjs';
 import { todayIn, windowStart, sheetSerial, addDays, ymd, ET } from './dates.mjs';
@@ -47,6 +50,11 @@ export async function queryFeedRows(q, feed, today) {
   }
   const from = windowStart(feed.window_rule, today);
   const p = [...params, from, today];
+  if (feed.source === 'media_daily') {
+    const rows = await exec(q, `select * from ads.v_media_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, channel, market, tactic`, p);
+    for (const r of rows) r.date = ymd(r.date);
+    return { rows, from };
+  }
   const rows = await exec(q, `select * from ads.v_feed_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, campaign, campaign_id`, p);
   const archive = (feed.archive_sources || []).filter(Boolean);
   if (archive.length) {

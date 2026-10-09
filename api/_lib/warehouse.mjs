@@ -224,11 +224,11 @@ export async function applySeed(q, seed) {
   }
   out.ad_accounts = (seed.ad_accounts || []).length;
   for (const f of seed.sheet_feeds || []) {
-    await exec(q, `insert into ads.sheet_feeds (client_id, spreadsheet_id, tab, accounts, columns, header, window_rule, archive_sources, date_columns, min_rows, enabled)
-      values ($1, $2, $3, $4::jsonb, $5::text[], $6::text[], coalesce($7, 'month_start_minus_2'), coalesce($8::text[], '{}'), coalesce($9::int[], '{1}'), coalesce($10, 50), coalesce($11, true))
+    await exec(q, `insert into ads.sheet_feeds (client_id, spreadsheet_id, tab, accounts, columns, header, window_rule, archive_sources, date_columns, min_rows, enabled, source)
+      values ($1, $2, $3, $4::jsonb, $5::text[], $6::text[], coalesce($7, 'month_start_minus_2'), coalesce($8::text[], '{}'), coalesce($9::int[], '{1}'), coalesce($10, 50), coalesce($11, true), coalesce($12, 'campaign_daily'))
       on conflict (spreadsheet_id, tab) do update set client_id = excluded.client_id, accounts = excluded.accounts, columns = excluded.columns, header = excluded.header,
-        window_rule = excluded.window_rule, archive_sources = excluded.archive_sources, date_columns = excluded.date_columns, min_rows = excluded.min_rows, enabled = excluded.enabled`,
-      [f.client_id, f.spreadsheet_id, f.tab, JSON.stringify(f.accounts), f.columns, f.header || null, f.window_rule || null, f.archive_sources || null, f.date_columns || null, f.min_rows ?? null, f.enabled ?? null]);
+        window_rule = excluded.window_rule, archive_sources = excluded.archive_sources, date_columns = excluded.date_columns, min_rows = excluded.min_rows, enabled = excluded.enabled, source = excluded.source`,
+      [f.client_id, f.spreadsheet_id, f.tab, JSON.stringify(f.accounts), f.columns, f.header || null, f.window_rule || null, f.archive_sources || null, f.date_columns || null, f.min_rows ?? null, f.enabled ?? null, f.source || null]);
   }
   out.sheet_feeds = (seed.sheet_feeds || []).length;
   for (const s of seed.stores || []) {

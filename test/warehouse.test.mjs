@@ -117,3 +117,9 @@ test('sheets: SA key accepts the shapes a hand paste produces', () => {
   assert.equal(bad.parses, false);
   assert.equal(bad.length, 11);
 });
+
+test('feeds: media_daily rows project to typed cells', () => {
+  const row = { date: '2026-10-08', platform: 'microsoft', channel: 'Bing Search', market: 'Broward', tactic: 'Brand', spend: '14.20', impressions: '201', clicks: '2', conversions: '0.00', store_visits: '0.00' };
+  assert.deepEqual(projectRow(row, ['date', 'platform', 'channel', 'market', 'tactic', 'spend', 'impressions', 'clicks', 'conversions', 'store_visits']),
+    [sheetSerial('2026-10-08'), 'microsoft', 'Bing Search', 'Broward', 'Brand', 14.2, 201, 2, 0, 0]);
+});
