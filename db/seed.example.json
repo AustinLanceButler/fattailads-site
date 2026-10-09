@@ -1,0 +1,77 @@
+{
+  "_readme": [
+    "POST this object as { \"action\": \"seed\", \"seed\": { ... } } to /api/admin/ingest (bearer INGEST_ADMIN_SECRET).",
+    "Real account ids, spreadsheet ids and the store roster live in the pacing-skill config doc, not in this repo.",
+    "Everything is upserted by natural key; campaign_name_rules are replaced per client.",
+    "platform: google | microsoft | meta | linkedin. parent_id: Microsoft CustomerId (the client's), or a Google login-customer-id override.",
+    "feed_source_tag becomes the Funnel-style data_source prefix (adwords: / bing: / facebook: / linkedin_api:).",
+    "sheet_feeds.columns picks columns from ads.v_feed_daily in tab order; 'conv:<label>' pulls a labelled conversion action; window_rule 'budgets_current' switches to ads.v_budget_pools_current."
+  ],
+  "clients": [
+    { "client_id": "acme", "display_name": "Acme Co", "timezone": "America/New_York" }
+  ],
+  "ad_accounts": [
+    { "platform": "google", "account_id": "1234567890", "client_id": "acme", "label": "Acme Google Ads", "feed_source_tag": "adwords", "backfill_from": "2025-01-01" },
+    { "platform": "microsoft", "account_id": "1234567", "parent_id": "12345678", "client_id": "acme", "label": "Acme Bing", "feed_source_tag": "bing", "timezone": "America/Chicago", "config": { "report_time_zone": "CentralTimeUSCanada" } },
+    { "platform": "meta", "account_id": "act_1234567890", "client_id": "acme", "label": "Acme Facebook", "feed_source_tag": "facebook" }
+  ],
+  "sheet_feeds": [
+    {
+      "client_id": "acme", "spreadsheet_id": "SPREADSHEET_ID", "tab": "Google Ads Data (SB)",
+      "accounts": [{ "platform": "google", "account_id": "1234567890" }],
+      "columns": ["date", "campaign", "cost", "clicks", "impressions", "all_conv", "store_visits", "search_is", "daily_budget_text"],
+      "header": ["Date", "Campaign", "Cost (*)", "Clicks", "Impressions", "All Conv.", "Store visits", "Search Impr. share – Estimated", "Daily Budget"],
+      "window_rule": "month_start_minus_2", "min_rows": 100
+    },
+    {
+      "client_id": "acme", "spreadsheet_id": "SPREADSHEET_ID", "tab": "Facebook Data (SB)",
+      "accounts": [{ "platform": "meta", "account_id": "act_1234567890" }],
+      "columns": ["date", "campaign", "cost", "clicks", "impressions", "daily_budget"],
+      "header": ["Date", "Campaign", "Cost", "Clicks", "Impressions", "Daily Budget"],
+      "window_rule": "month_start_minus_2", "min_rows": 20
+    },
+    {
+      "client_id": "acme", "spreadsheet_id": "SPREADSHEET_ID", "tab": "Bing Ads Data (SB)",
+      "accounts": [{ "platform": "microsoft", "account_id": "1234567" }],
+      "columns": ["date", "campaign", "cost", "clicks"],
+      "header": ["Date", "Campaign", "Cost", "Clicks"],
+      "window_rule": "month_start_minus_2", "min_rows": 50
+    },
+    {
+      "client_id": "acme", "spreadsheet_id": "SPREADSHEET_ID", "tab": "Bing Budgets",
+      "accounts": [{ "platform": "microsoft", "account_id": "1234567" }],
+      "columns": ["as_of", "budget_key", "name", "is_shared", "amount", "live_campaigns"],
+      "header": ["As of", "Budget key", "Name", "Shared pool", "Daily amount", "Live campaigns"],
+      "window_rule": "budgets_current", "min_rows": 1
+    },
+    {
+      "client_id": "acme", "spreadsheet_id": "TEGUAR_STYLE_SPREADSHEET_ID", "tab": "Funnel (SB)",
+      "accounts": [{ "platform": "google", "account_id": "1234567890" }, { "platform": "microsoft", "account_id": "1234567" }],
+      "archive_sources": ["linkedin_api"],
+      "columns": ["data_source", "data_source_name", "account_id", "campaign_id", "date", "campaign", "cost", "clicks", "impressions", "all_conv", "paid_organic", "search_is", "conversions",
+                  "conv:Get a Quick Quote", "conv:Contact Form Submission", "conv:Chat Connected", "conv:First Time Phone Call", "conv:Purchase from Website", "conv_total",
+                  "daily_budget", "budget_association_status", "budget_name", "budget_status", "conversions", "campaign_status", "blank"],
+      "window_rule": "from:2025-01-01", "date_columns": [5], "min_rows": 500
+    }
+  ],
+  "stores": [
+    { "client_id": "acme", "store_number": "0804", "market": "Broward", "city": "Fort Lauderdale", "state": "FL" }
+  ],
+  "market_aliases": [
+    { "client_id": "acme", "alias": "Dade", "market": "Miami Dade" },
+    { "client_id": "acme", "alias": "Massachusetts", "market": "Western Mass" },
+    { "client_id": "acme", "alias": "Carolina", "market": "Myrtle Beach" },
+    { "client_id": "acme", "alias": "South Carolina", "market": "Myrtle Beach" }
+  ],
+  "campaign_name_rules": [
+    { "client_id": "acme", "platform": "google", "priority": 10, "pattern": "^(Brand|Non Brand|Conquesting) - ([A-Za-z ]+?) - (\\d{3,4})\\b", "channel": "search", "market_group": 2, "store_group": 3, "notes": "Search: [Tactic] - [Market] - [Store] - …; tactic comes from the first group via a second rule set or the override table" },
+    { "client_id": "acme", "platform": "google", "priority": 20, "pattern": "^PMax - .* - ([A-Za-z ]+)$", "channel": "pmax", "market_group": 1 },
+    { "client_id": "acme", "platform": "google", "priority": 30, "pattern": "^ACE - Video - Efficient reach - ([A-Za-z ]+)$", "channel": "video", "market_group": 1 },
+    { "client_id": "acme", "platform": "meta", "priority": 40, "pattern": "^ACE - Video Ads - ([A-Za-z ]+)", "channel": "facebook_video", "market_group": 1 },
+    { "client_id": "acme", "platform": "microsoft", "priority": 50, "pattern": "^Brand - ([A-Za-z ]+?) - (\\d{3,4})\\b", "channel": "search", "tactic": "Brand", "market_group": 1, "store_group": 2 }
+  ],
+  "conversion_labels": [
+    { "platform": "google", "account_id": "1234567890", "match": "Get a Quick Quote", "report_label": "Get a Quick Quote" },
+    { "platform": "google", "account_id": "1234567890", "match": "Contact Form", "report_label": "Contact Form Submission" }
+  ]
+}
