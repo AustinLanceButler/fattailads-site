@@ -5,7 +5,9 @@
     "Everything is upserted by natural key; campaign_name_rules are replaced per client.",
     "platform: google | microsoft | meta | linkedin. parent_id: Microsoft CustomerId (the client's), or a Google login-customer-id override.",
     "feed_source_tag becomes the Funnel-style data_source prefix (adwords: / bing: / facebook: / linkedin_api:).",
-    "sheet_feeds.columns picks columns from ads.v_feed_daily in tab order; 'conv:<label>' pulls a labelled conversion action; window_rule 'budgets_current' switches to ads.v_budget_pools_current."
+    "sheet_feeds.columns picks columns from ads.v_feed_daily in tab order; 'conv:<label>' pulls a labelled conversion action; window_rule 'budgets_current' switches to ads.v_budget_pools_current.",
+    "sheet_feeds.source 'media_daily' reads ads.v_media_daily (date × channel × market × tactic, dims from campaign_name_rules) instead of the campaign-per-day feed — for dashboards.",
+    "campaign_name_rules.pattern is a Postgres regex: word boundary is \\y, not \\b (\\b is a backspace there)."
   ],
   "clients": [
     { "client_id": "acme", "display_name": "Acme Co", "timezone": "America/New_York" }
@@ -52,6 +54,13 @@
                   "conv:Get a Quick Quote", "conv:Contact Form Submission", "conv:Chat Connected", "conv:First Time Phone Call", "conv:Purchase from Website", "conv_total",
                   "daily_budget", "budget_association_status", "budget_name", "budget_status", "conversions", "campaign_status", "blank"],
       "window_rule": "from:2025-01-01", "date_columns": [5], "min_rows": 500
+    },
+    {
+      "client_id": "acme", "spreadsheet_id": "SPREADSHEET_ID", "tab": "Media Daily (SB)", "source": "media_daily",
+      "accounts": [{ "platform": "google", "account_id": "1234567890" }, { "platform": "microsoft", "account_id": "1234567" }, { "platform": "meta", "account_id": "act_1234567890" }],
+      "columns": ["date", "platform", "channel", "market", "tactic", "spend", "impressions", "clicks", "conversions", "store_visits"],
+      "header": ["date", "platform", "channel", "market", "tactic", "spend", "impressions", "clicks", "conversions", "store_visits"],
+      "window_rule": "from:2025-01-01", "min_rows": 500
     }
   ],
   "stores": [
@@ -64,11 +73,11 @@
     { "client_id": "acme", "alias": "South Carolina", "market": "Myrtle Beach" }
   ],
   "campaign_name_rules": [
-    { "client_id": "acme", "platform": "google", "priority": 10, "pattern": "^(Brand|Non Brand|Conquesting) - ([A-Za-z ]+?) - (\\d{3,4})\\b", "channel": "search", "market_group": 2, "store_group": 3, "notes": "Search: [Tactic] - [Market] - [Store] - …; tactic comes from the first group via a second rule set or the override table" },
+    { "client_id": "acme", "platform": "google", "priority": 10, "pattern": "^(Brand|Non Brand|Conquesting) - ([A-Za-z ]+?) - (\\d{3,4})\\y", "channel": "search", "market_group": 2, "store_group": 3, "notes": "Search: [Tactic] - [Market] - [Store] - …; tactic comes from the first group via a second rule set or the override table" },
     { "client_id": "acme", "platform": "google", "priority": 20, "pattern": "^PMax - .* - ([A-Za-z ]+)$", "channel": "pmax", "market_group": 1 },
     { "client_id": "acme", "platform": "google", "priority": 30, "pattern": "^ACE - Video - Efficient reach - ([A-Za-z ]+)$", "channel": "video", "market_group": 1 },
     { "client_id": "acme", "platform": "meta", "priority": 40, "pattern": "^ACE - Video Ads - ([A-Za-z ]+)", "channel": "facebook_video", "market_group": 1 },
-    { "client_id": "acme", "platform": "microsoft", "priority": 50, "pattern": "^Brand - ([A-Za-z ]+?) - (\\d{3,4})\\b", "channel": "search", "tactic": "Brand", "market_group": 1, "store_group": 2 }
+    { "client_id": "acme", "platform": "microsoft", "priority": 50, "pattern": "^Brand - ([A-Za-z ]+?) - (\\d{3,4})\\y", "channel": "search", "tactic": "Brand", "market_group": 1, "store_group": 2 }
   ],
   "conversion_labels": [
     { "platform": "google", "account_id": "1234567890", "match": "Get a Quick Quote", "report_label": "Get a Quick Quote" },
