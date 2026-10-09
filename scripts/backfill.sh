@@ -13,14 +13,18 @@ PLATFORM=${1:?platform}; ACCOUNT=${2:?account_id}; FROM=${3:?from YYYY-MM-DD}; T
 BASE=${BASE:-https://fattailads.com}
 : "${INGEST_ADMIN_SECRET:?set INGEST_ADMIN_SECRET}"
 
+# Date math via python3: GNU `date -d` doesn't exist on macOS.
+month_end_of() { python3 -c 'import sys,datetime as d,calendar as c; t=d.date.fromisoformat(sys.argv[1]); print(t.replace(day=c.monthrange(t.year,t.month)[1]))' "$1"; }
+next_day()     { python3 -c 'import sys,datetime as d; print(d.date.fromisoformat(sys.argv[1])+d.timedelta(days=1))' "$1"; }
+
 start=$FROM
 while [[ "$start" < "$TO" || "$start" == "$TO" ]]; do
-  month_end=$(date -u -d "$(date -u -d "$start" +%Y-%m-01) +1 month -1 day" +%Y-%m-%d)
+  month_end=$(month_end_of "$start")
   end=$month_end; [[ "$end" > "$TO" ]] && end=$TO
   echo -n "$PLATFORM $ACCOUNT $start..$end  "
   curl -sS -X POST "$BASE/api/admin/ingest" \
     -H "Authorization: Bearer $INGEST_ADMIN_SECRET" -H 'content-type: application/json' \
     -d "{\"action\":\"run\",\"platform\":\"$PLATFORM\",\"account_id\":\"$ACCOUNT\",\"from\":\"$start\",\"to\":\"$end\",\"snapshots\":false,\"job\":\"backfill\"}" \
     | python3 -c 'import json,sys; j=json.load(sys.stdin); r=(j.get("results") or [{}])[0]; print(r.get("status"), "rows=",r.get("rows"), r.get("error") or "", "ms=",j.get("ms"))'
-  start=$(date -u -d "$end +1 day" +%Y-%m-%d)
+  start=$(next_day "$end")
 done

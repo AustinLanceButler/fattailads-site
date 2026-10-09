@@ -15,10 +15,39 @@ export function saConfigured() {
   return !!(process.env.GOOGLE_SA_EMAIL && process.env.GOOGLE_SA_PRIVATE_KEY);
 }
 
+// The key is pasted by hand into Vercel, so accept the shapes that paste produces:
+// the PEM itself, the PEM with literal \n, wrapped in quotes, the whole JSON key
+// file, or the PEM base64-encoded once more.
+export function normalizeSaKey(raw) {
+  let v = String(raw || '').trim();
+  if (/^(['"]).*\1$/s.test(v)) v = v.slice(1, -1).trim();
+  if (v.startsWith('{')) {
+    try { v = String(JSON.parse(v).private_key || ''); } catch { /* not JSON after all */ }
+  }
+  if (!v.includes('-----BEGIN') && /^[A-Za-z0-9+/=\s]+$/.test(v)) {
+    const decoded = Buffer.from(v.replace(/\s/g, ''), 'base64').toString('utf8');
+    if (decoded.includes('-----BEGIN')) v = decoded.trim();
+  }
+  return v.replace(/\\r\\n|\\n/g, '\n').replace(/\r\n/g, '\n');
+}
+
+// Booleans only, never key material: lets the admin probe say why a key won't load.
+export function saKeyShape(raw = process.env.GOOGLE_SA_PRIVATE_KEY) {
+  const v = String(raw || '');
+  const key = normalizeSaKey(v);
+  let parses = false;
+  try { crypto.createPrivateKey(key); parses = true; } catch { /* reported below */ }
+  return {
+    length: v.length, quoted: /^\s*['"]/.test(v), json_blob: v.trim().startsWith('{'),
+    has_begin: v.includes('-----BEGIN'), literal_backslash_n: v.includes('\\n'), real_newlines: v.includes('\n'),
+    normalized_has_begin: key.includes('-----BEGIN PRIVATE KEY-----') || key.includes('-----BEGIN RSA PRIVATE KEY-----'), parses,
+  };
+}
+
 async function saToken() {
   if (cached && Date.now() < cached.exp - 60000) return cached.token;
   const email = process.env.GOOGLE_SA_EMAIL;
-  const key = (process.env.GOOGLE_SA_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  const key = normalizeSaKey(process.env.GOOGLE_SA_PRIVATE_KEY);
   if (!email || !key) throw Object.assign(new Error('GOOGLE_SA_EMAIL / GOOGLE_SA_PRIVATE_KEY are not set'), { code: 'not_configured' });
   const now = Math.floor(Date.now() / 1000);
   const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');

@@ -100,6 +100,8 @@ export async function pollReport(account, reportRequestId) {
 
 // Rows: { date, campaign_id, campaign_name, campaign_status, spend, clicks, impressions, conversions, all_conversions, budget_name, budget_status, budget_association_status, impression_share }
 export async function downloadReport(url) {
+  // A report with no rows comes back Success with no download URL.
+  if (!url) return [];
   const r = await fetchRetry(url, {}, { label: 'ms download' });
   if (!r.ok) throw Object.assign(new Error(`Microsoft report download failed: HTTP ${r.status}`), { code: 'ms_download' });
   const zip = unzipSync(new Uint8Array(await r.arrayBuffer()));
@@ -206,8 +208,28 @@ export async function ingestMicrosoft(q, account, from, to, { snapshots = true, 
   return out;
 }
 
-export async function loadReportRows(q, account, rows, { today, runId = null }) {
+// The budget columns split a campaign-day into several rows when its budget
+// association changed that day; fold them back to one row per (campaign, date).
+export function mergeCampaignDays(rows) {
+  const byKey = new Map();
+  const add = (a, b) => (a === null || a === undefined ? b : b === null || b === undefined ? a : a + b);
+  for (const r of rows) {
+    const k = `${r.campaign_id}|${r.date}`;
+    const m = byKey.get(k);
+    if (!m) { byKey.set(k, { ...r }); continue; }
+    if ((r.impressions || 0) > (m.impressions || 0)) {
+      Object.assign(m, { campaign_name: r.campaign_name, campaign_status: r.campaign_status, budget_name: r.budget_name,
+        budget_status: r.budget_status, budget_association_status: r.budget_association_status, impression_share: r.impression_share });
+    }
+    m.spend += r.spend; m.clicks += r.clicks; m.impressions += r.impressions;
+    m.conversions = add(m.conversions, r.conversions); m.all_conversions = add(m.all_conversions, r.all_conversions);
+  }
+  return [...byKey.values()];
+}
+
+export async function loadReportRows(q, account, rawRows, { today, runId = null }) {
   const aid = String(account.account_id);
+  const rows = mergeCampaignDays(rawRows);
   const camps = new Map();
   for (const r of rows) {
     const c = camps.get(r.campaign_id) || { campaign_id: r.campaign_id, name: r.campaign_name, status: r.campaign_status, first_seen: r.date, last_seen: r.date };
