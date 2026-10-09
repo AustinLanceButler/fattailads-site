@@ -3,9 +3,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addDays, monthStartMinus, monthChunks, sheetSerial, windowStart, todayIn, isYmd } from '../api/_lib/dates.mjs';
 import { parseCsv, num } from '../api/_lib/ingest/http.mjs';
-import { parseReportCsv, toYmd, REPORT_COLUMNS } from '../api/_lib/ingest/microsoft-ads.mjs';
+import { parseReportCsv, toYmd, REPORT_COLUMNS, mergeCampaignDays, downloadReport } from '../api/_lib/ingest/microsoft-ads.mjs';
 import { projectRow } from '../api/_lib/feeds.mjs';
-import { colLetter } from '../api/_lib/sheets.mjs';
+import { colLetter, normalizeSaKey, saKeyShape } from '../api/_lib/sheets.mjs';
+import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
 
 test('dates: arithmetic and windows', () => {
@@ -89,4 +90,30 @@ test('migrations: ids unique, statements are single statements', () => {
       assert.ok(!/;\s*\S/.test(stripped), `multiple statements in: ${s.slice(0, 60)}`);
     }
   }
+});
+
+test('microsoft: budget-split campaign-days merge to one row', async () => {
+  const rows = mergeCampaignDays([
+    { date: '2026-09-01', campaign_id: '7', campaign_name: 'Brand - Broward - 0176', campaign_status: 'Active', spend: 1.5, clicks: 2, impressions: 10, conversions: 1, all_conversions: null, budget_name: 'Broward West - Brand', impression_share: 0.4 },
+    { date: '2026-09-01', campaign_id: '7', campaign_name: 'Brand - Broward - 0176', campaign_status: 'Active', spend: 2.5, clicks: 3, impressions: 30, conversions: null, all_conversions: 2, budget_name: 'Broward - Brand', impression_share: 0.6 },
+    { date: '2026-09-02', campaign_id: '7', campaign_name: 'Brand - Broward - 0176', campaign_status: 'Active', spend: 1, clicks: 1, impressions: 5, conversions: 0, all_conversions: 0, budget_name: 'Broward - Brand', impression_share: 0.5 },
+  ]);
+  assert.equal(rows.length, 2);
+  const d1 = rows.find((r) => r.date === '2026-09-01');
+  assert.deepEqual([d1.spend, d1.clicks, d1.impressions, d1.conversions, d1.all_conversions], [4, 5, 40, 1, 2]);
+  assert.equal(d1.budget_name, 'Broward - Brand'); // dimensions come from the row with more impressions
+  assert.equal(d1.impression_share, 0.6);
+  assert.deepEqual(await downloadReport(null), []); // empty report: Success with no URL
+});
+
+test('sheets: SA key accepts the shapes a hand paste produces', () => {
+  const { privateKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 1024 });
+  const pem = privateKey.export({ type: 'pkcs8', format: 'pem' });
+  const pastes = [pem, pem.replace(/\n/g, '\\n'), `"${pem.replace(/\n/g, '\\n')}"`, JSON.stringify({ type: 'service_account', private_key: pem }),
+    Buffer.from(pem).toString('base64'), pem.replace(/\n/g, '\r\n')];
+  for (const p of pastes) assert.equal(saKeyShape(p).parses, true);
+  assert.equal(normalizeSaKey(JSON.stringify({ private_key: pem })), pem);
+  const bad = saKeyShape('[Sensitive]');
+  assert.equal(bad.parses, false);
+  assert.equal(bad.length, 11);
 });

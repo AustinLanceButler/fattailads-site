@@ -24,7 +24,7 @@ import { loadFunnelTab } from '../_lib/archive.mjs';
 import { checkHealth } from '../_lib/health.mjs';
 import { raiseAlert } from '../_lib/alerts.mjs';
 import { isYmd } from '../_lib/dates.mjs';
-import { saConfigured } from '../_lib/sheets.mjs';
+import { saConfigured, saKeyShape } from '../_lib/sheets.mjs';
 
 export default async function handler(req, res) {
   if (!allowMethods(req, res, ['POST'])) return;
@@ -85,7 +85,7 @@ async function probe(q) {
     CLICKUP_ALERTS: !!(process.env.CLICKUP_API_TOKEN && process.env.ALERT_CLICKUP_LIST_ID),
     CONNECT_GOOGLE_ADS_MCC: process.env.CONNECT_GOOGLE_ADS_MCC || '(default 673-311-0705)',
   };
-  const out = { env };
+  const out = { env, google_sa_key: env.GOOGLE_SA ? saKeyShape() : null };
   const [migrations, accounts] = await Promise.all([
     exec(q, 'select id, applied_at from ads.schema_migrations order by applied_at'),
     listAccounts(q, { includeDisabled: true }),
