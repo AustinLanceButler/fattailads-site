@@ -12,8 +12,10 @@ import { fetchRetry } from './http.mjs';
 const ADS_VERSION = process.env.GOOGLE_ADS_API_VERSION || 'v25';
 export const mccId = () => String(process.env.CONNECT_GOOGLE_ADS_MCC || '673-311-0705').replace(/\D/g, '');
 
-export async function googleAds(customerId, path, body, { loginCustomerId } = {}) {
-  const token = await accessToken('google');
+// credential: which stored identity to call as — 'google' (FTA) by default, or
+// 'google_personal' for white-label accounts (ad_accounts.config.credential).
+export async function googleAds(customerId, path, body, { loginCustomerId, credential = 'google' } = {}) {
+  const token = await accessToken(credential === 'google_personal' ? 'google_personal' : 'google');
   const headers = { authorization: `Bearer ${token}`, 'content-type': 'application/json', 'login-customer-id': String(loginCustomerId || mccId()).replace(/\D/g, '') };
   if (process.env.GOOGLE_ADS_DEVELOPER_TOKEN) headers['developer-token'] = process.env.GOOGLE_ADS_DEVELOPER_TOKEN;
   const r = await fetchRetry(`https://googleads.googleapis.com/${ADS_VERSION}/customers/${String(customerId).replace(/\D/g, '')}/${path}`,
@@ -60,7 +62,7 @@ export async function ingestGoogle(q, account, from, to, { snapshots = true, run
   const cid = account.account_id;
   const login = account.parent_id || mccId();
   const today = todayIn(account.timezone || 'America/New_York');
-  const opts = { loginCustomerId: login };
+  const opts = { loginCustomerId: login, credential: (account.config && account.config.credential) || 'google' };
   const out = { rows: 0, conversions: 0, campaigns: 0, budgets: 0 };
 
   if (snapshots) {
