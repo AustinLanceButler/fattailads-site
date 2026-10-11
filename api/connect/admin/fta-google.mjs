@@ -3,12 +3,14 @@
 // Uses the ops-project OAuth client (FTA_GOOGLE_CLIENT_ID/SECRET), offline access,
 // and only accepts the receiving identity (austin@fattailads.com). The state and
 // PKCE verifier ride in a sealed cookie on the admin path, so no DB row is needed.
+// ?as=personal connects Austin's personal login instead (stored as google_personal),
+// for white-label accounts; it only accepts FTA_GOOGLE_PERSONAL_EMAIL.
 
 import { allowMethods, baseUrl, clearCookie, sendError, setCookie } from '../../_lib/http.mjs';
 import { randomToken, safeEqual, seal, open, sha256Base64Url } from '../../_lib/crypto.mjs';
 import { ADMIN_COOKIE_PATH, requireAdmin } from '../../_lib/admin-session.mjs';
 import { fetchVerifiedEmail, receivingEmail } from '../../_lib/google.mjs';
-import { FTA_GOOGLE_SCOPES, saveCredential } from '../../_lib/fta-credentials.mjs';
+import { FTA_GOOGLE_SCOPES, personalGoogleEmail, saveCredential } from '../../_lib/fta-credentials.mjs';
 import { audit } from '../../_lib/db.mjs';
 
 const COOKIE = 'fta_ftag';
@@ -32,9 +34,10 @@ export default async function handler(req, res) {
   const qs = req.query || {};
 
   if (!qs.code && !qs.error) {
+    const personal = qs.as === 'personal';
     const state = randomToken(32);
     const verifier = randomToken(48);
-    setCookie(res, COOKIE, seal({ s: state, v: verifier, exp: Date.now() + 1800000 }, AAD), { maxAge: 1800, path: ADMIN_COOKIE_PATH });
+    setCookie(res, COOKIE, seal({ s: state, v: verifier, p: personal, exp: Date.now() + 1800000 }, AAD), { maxAge: 1800, path: ADMIN_COOKIE_PATH });
     const p = new URLSearchParams({
       client_id: process.env.FTA_GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
@@ -43,7 +46,7 @@ export default async function handler(req, res) {
       access_type: 'offline',
       prompt: 'consent',
       include_granted_scopes: 'false',
-      login_hint: receivingEmail(),
+      login_hint: personal ? personalGoogleEmail() : receivingEmail(),
       state,
       code_challenge: sha256Base64Url(verifier),
       code_challenge_method: 'S256',
@@ -74,15 +77,16 @@ export default async function handler(req, res) {
       return back(res, { fta: j.error === 'invalid_client' ? 'google_client' : 'google_failed' });
     }
     const email = await fetchVerifiedEmail(j.access_token);
-    if (email !== receivingEmail()) {
+    const provider = saved.p ? 'google_personal' : 'google';
+    if (email !== (saved.p ? personalGoogleEmail() : receivingEmail())) {
       await audit(null, 'fta_google_wrong_identity', { admin, email });
       return back(res, { fta: 'google_wrong_identity' });
     }
     const granted = String(j.scope || '').split(' ');
     const missing = FTA_GOOGLE_SCOPES.filter((s) => s.startsWith('https://') && !granted.includes(s));
-    await saveCredential('google', email, j.refresh_token, j.scope || '');
-    await audit(null, 'fta_google_connected', { admin, email, missing });
-    return back(res, { fta: missing.length ? 'google_partial' : 'google_ok' });
+    await saveCredential(provider, email, j.refresh_token, j.scope || '');
+    await audit(null, 'fta_google_connected', { admin, email, provider, missing });
+    return back(res, { fta: `${saved.p ? 'google_personal' : 'google'}_${missing.length ? 'partial' : 'ok'}` });
   } catch (err) {
     console.error('[connect/admin/fta-google]', err.message);
     return back(res, { fta: 'google_failed' });

@@ -4,6 +4,9 @@
 //
 //   google    — austin@fattailads.com, minted through a web OAuth client in the ops
 //               Cloud project (FTA_GOOGLE_CLIENT_ID / FTA_GOOGLE_CLIENT_SECRET).
+//   google_personal — Austin's personal Google login (FTA_GOOGLE_PERSONAL_EMAIL), same
+//               client. For white-label accounts where the FTA identity must not
+//               appear; a warehouse account opts in with config.credential.
 //   microsoft — Microsoft Advertising, via device-code sign-in on a public Entra app
 //               (FTA_MS_CLIENT_ID, no secret). Microsoft rotates the refresh token,
 //               so the newest one is written back on every refresh.
@@ -49,10 +52,11 @@ export async function accessToken(provider) {
   const payload = open(row.sealed_refresh, aad(provider));
   if (!payload || !payload.r) throw Object.assign(new Error(`${provider} credential unreadable`), { code: 'unreadable' });
 
-  const body = provider === 'google'
+  const isGoogle = provider === 'google' || provider === 'google_personal';
+  const body = isGoogle
     ? new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: process.env.FTA_GOOGLE_CLIENT_ID || '', client_secret: process.env.FTA_GOOGLE_CLIENT_SECRET || '' })
     : new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: msClientId(), scope: FTA_MS_SCOPES.join(' ') });
-  const url = provider === 'google' ? 'https://oauth2.googleapis.com/token' : MS_TOKEN_URL;
+  const url = isGoogle ? 'https://oauth2.googleapis.com/token' : MS_TOKEN_URL;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.access_token) {
@@ -66,6 +70,8 @@ export async function accessToken(provider) {
   await q`UPDATE connect_fta_credentials SET last_ok_at = now(), last_error = null WHERE provider = ${provider}`;
   return j.access_token;
 }
+
+export const personalGoogleEmail = () => String(process.env.FTA_GOOGLE_PERSONAL_EMAIL || 'austin.lance.butler@gmail.com').toLowerCase();
 
 export function msClientId() {
   return process.env.FTA_MS_CLIENT_ID || '';
