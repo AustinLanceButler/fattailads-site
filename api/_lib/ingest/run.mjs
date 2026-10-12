@@ -6,10 +6,11 @@ import { todayIn, addDays } from '../dates.mjs';
 import { ingestGoogle } from './google-ads.mjs';
 import { ingestMicrosoft, drainPending } from './microsoft-ads.mjs';
 import { ingestMeta } from './meta.mjs';
+import { ingestLinkedIn } from './linkedin.mjs';
 
 export const DEFAULT_LOOKBACK_DAYS = 35;
 
-const INGEST = { google: ingestGoogle, microsoft: ingestMicrosoft, meta: ingestMeta };
+const INGEST = { google: ingestGoogle, microsoft: ingestMicrosoft, meta: ingestMeta, linkedin: ingestLinkedIn };
 
 // opts: { from, to, account_id, snapshots, job }
 export async function runPlatform(platform, opts = {}) {
