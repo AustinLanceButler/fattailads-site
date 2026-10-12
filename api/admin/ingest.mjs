@@ -18,6 +18,7 @@ import { wh, exec, applySeed, listAccounts } from '../_lib/warehouse.mjs';
 import { runPlatform } from '../_lib/ingest/run.mjs';
 import { probeAccess } from '../_lib/ingest/google-ads.mjs';
 import { probeMeta } from '../_lib/ingest/meta.mjs';
+import { probeLinkedIn } from '../_lib/ingest/linkedin.mjs';
 import { fetchCampaignsAndBudgets } from '../_lib/ingest/microsoft-ads.mjs';
 import { pushAllFeeds } from '../_lib/feeds.mjs';
 import { loadFunnelTab } from '../_lib/archive.mjs';
@@ -44,7 +45,7 @@ export default async function handler(req, res) {
       }
       case 'run': {
         const platform = String(body.platform || '');
-        if (!['google', 'microsoft', 'meta'].includes(platform)) return sendError(res, 400, 'invalid_input', 'platform must be google | microsoft | meta.');
+        if (!['google', 'microsoft', 'meta', 'linkedin'].includes(platform)) return sendError(res, 400, 'invalid_input', 'platform must be google | microsoft | meta | linkedin.');
         for (const k of ['from', 'to']) if (body[k] && !isYmd(body[k])) return sendError(res, 400, 'invalid_input', `${k} must be YYYY-MM-DD.`);
         out = { results: await runPlatform(platform, { account_id: body.account_id ? String(body.account_id) : null, from: body.from || null, to: body.to || null, snapshots: body.snapshots !== false, job: body.job || null }) };
         break;
@@ -94,6 +95,7 @@ async function probe(q) {
   out.accounts = accounts.map((a) => ({ platform: a.platform, account_id: a.account_id, label: a.label, enabled: a.enabled, parent_id: a.parent_id, timezone: a.timezone }));
   try { out.google = { mcc_clients: await probeAccess() }; } catch (err) { out.google = { error: err.message }; }
   if (env.META_ADS_TOKEN) { try { out.meta = await probeMeta(); } catch (err) { out.meta = { error: err.message }; } } else out.meta = { skipped: 'META_ADS_TOKEN not set' };
+  try { out.linkedin = await probeLinkedIn(); } catch (err) { out.linkedin = { error: err.message }; }
   out.microsoft = [];
   for (const a of accounts.filter((x) => x.platform === 'microsoft')) {
     try {

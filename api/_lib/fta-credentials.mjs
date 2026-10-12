@@ -7,6 +7,9 @@
 //   google_personal — Austin's personal Google login (FTA_GOOGLE_PERSONAL_EMAIL), same
 //               client. For white-label accounts where the FTA identity must not
 //               appear; a warehouse account opts in with config.credential.
+//   linkedin  — LinkedIn Marketing API (r_ads r_ads_reporting) for the ads warehouse,
+//               minted via /api/connect/admin/fta-linkedin on FTA_LINKEDIN_CLIENT_ID /
+//               FTA_LINKEDIN_CLIENT_SECRET. Separate from linkedin-mcp's own token.
 //   microsoft — Microsoft Advertising, via device-code sign-in on a public Entra app
 //               (FTA_MS_CLIENT_ID, no secret). Microsoft rotates the refresh token,
 //               so the newest one is written back on every refresh.
@@ -23,6 +26,8 @@ export const FTA_GOOGLE_SCOPES = [
   'https://www.googleapis.com/auth/content',
   'https://www.googleapis.com/auth/business.manage',
 ];
+export const FTA_LINKEDIN_SCOPES = ['r_ads', 'r_ads_reporting'];
+export const LINKEDIN_TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
 export const FTA_MS_SCOPES = ['https://ads.microsoft.com/msads.manage', 'offline_access', 'openid', 'profile', 'email'];
 const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 
@@ -44,8 +49,20 @@ export async function credentialStatus() {
            FROM connect_fta_credentials ORDER BY provider`;
 }
 
+// LinkedIn access tokens live ~60 days, so reuse one per warm instance instead of
+// refreshing on every call (Google/Microsoft keep the old refresh-each-call path).
+const tokenCache = new Map();
+
 // Returns a fresh access token for the provider, or throws.
 export async function accessToken(provider) {
+  const hit = tokenCache.get(provider);
+  if (hit && Date.now() < hit.exp) return hit.token;
+  const token = await refreshAccessToken(provider);
+  if (provider === 'linkedin') tokenCache.set(provider, { token, exp: Date.now() + 50 * 60 * 1000 });
+  return token;
+}
+
+async function refreshAccessToken(provider) {
   const q = await db();
   const [row] = await q`SELECT sealed_refresh FROM connect_fta_credentials WHERE provider = ${provider}`;
   if (!row) throw Object.assign(new Error(`no ${provider} credential`), { code: 'not_connected' });
@@ -53,10 +70,13 @@ export async function accessToken(provider) {
   if (!payload || !payload.r) throw Object.assign(new Error(`${provider} credential unreadable`), { code: 'unreadable' });
 
   const isGoogle = provider === 'google' || provider === 'google_personal';
+  const isLinkedIn = provider === 'linkedin';
   const body = isGoogle
     ? new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: process.env.FTA_GOOGLE_CLIENT_ID || '', client_secret: process.env.FTA_GOOGLE_CLIENT_SECRET || '' })
-    : new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: msClientId(), scope: FTA_MS_SCOPES.join(' ') });
-  const url = isGoogle ? 'https://oauth2.googleapis.com/token' : MS_TOKEN_URL;
+    : isLinkedIn
+      ? new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: process.env.FTA_LINKEDIN_CLIENT_ID || '', client_secret: process.env.FTA_LINKEDIN_CLIENT_SECRET || '' })
+      : new URLSearchParams({ grant_type: 'refresh_token', refresh_token: payload.r, client_id: msClientId(), scope: FTA_MS_SCOPES.join(' ') });
+  const url = isGoogle ? 'https://oauth2.googleapis.com/token' : isLinkedIn ? LINKEDIN_TOKEN_URL : MS_TOKEN_URL;
   const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body });
   const j = await r.json().catch(() => ({}));
   if (!r.ok || !j.access_token) {

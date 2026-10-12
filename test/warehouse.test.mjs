@@ -197,3 +197,21 @@ test('health: sheet-feed date guard tolerates weekend gaps when ingest covered y
   assert.equal(feedDateStale({ maxDate: '2026-10-11', today, covered: false }), false);
   assert.equal(feedDateStale({ maxDate: null, today, covered: true }), true);
 });
+
+test('linkedin: adAnalytics element → ad_daily row, Restli date range', async () => {
+  const { analyticsRow, restliDateRange } = await import('../api/_lib/ingest/linkedin.mjs');
+  assert.equal(restliDateRange('2025-01-01', '2026-10-09'), '(start:(year:2025,month:1,day:1),end:(year:2026,month:10,day:9))');
+  const row = analyticsRow({
+    pivotValues: ['urn:li:sponsoredCampaign:412345678'],
+    dateRange: { start: { year: 2026, month: 10, day: 9 }, end: { year: 2026, month: 10, day: 9 } },
+    costInLocalCurrency: '41.27', impressions: 3120, clicks: 18, externalWebsiteConversions: 2,
+  }, { accountId: '506507044', today: '2026-10-12', runId: 7 });
+  assert.deepEqual(row, {
+    platform: 'linkedin', account_id: '506507044', campaign_id: '412345678', date: '2026-10-09',
+    cost: 41.27, clicks: 18, impressions: 3120, all_conversions: 2, conversions: 2, conversions_value: null,
+    is_complete: true, source: 'api', run_id: 7,
+  });
+  assert.equal(analyticsRow({ pivotValues: [], dateRange: null }, { accountId: '1', today: '2026-10-12' }), null);
+  const today = analyticsRow({ pivotValues: ['urn:li:sponsoredCampaign:9'], dateRange: { start: { year: 2026, month: 10, day: 12 } } }, { accountId: '1', today: '2026-10-12' });
+  assert.equal(today.is_complete, false);
+});

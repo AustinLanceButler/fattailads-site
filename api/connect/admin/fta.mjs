@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'POST') {
       const provider = String(readBody(req).provider || '');
-      if (!['google', 'google_personal', 'microsoft'].includes(provider)) return sendError(res, 400, 'invalid_input', 'Unknown provider.');
+      if (!['google', 'google_personal', 'microsoft', 'linkedin'].includes(provider)) return sendError(res, 400, 'invalid_input', 'Unknown provider.');
       try {
         await accessToken(provider);
       } catch (err) {
@@ -26,6 +26,7 @@ export default async function handler(req, res) {
         google: !!(process.env.FTA_GOOGLE_CLIENT_ID && process.env.FTA_GOOGLE_CLIENT_SECRET),
         google_personal: !!(process.env.FTA_GOOGLE_CLIENT_ID && process.env.FTA_GOOGLE_CLIENT_SECRET),
         microsoft: !!msClientId(),
+        linkedin: !!(process.env.FTA_LINKEDIN_CLIENT_ID && process.env.FTA_LINKEDIN_CLIENT_SECRET),
       },
     });
   } catch (err) {
