@@ -22,6 +22,7 @@ import { exec, listFeeds } from './warehouse.mjs';
 import { todayIn, windowStart, sheetSerial, addDays, ymd, ET } from './dates.mjs';
 import { writeTab, saConfigured } from './sheets.mjs';
 import { raiseAlert, clearAlert } from './alerts.mjs';
+import { loadCoverage, accountsCovered, feedDateStale, feedAccounts } from './health.mjs';
 
 const ARCHIVE_MAP = {
   date: 'date', campaign: 'campaign', campaign_id: 'campaign_id', account_id: 'account_id', data_source: 'data_source',
@@ -41,7 +42,7 @@ function accountFilter(accounts) {
 }
 
 export async function queryFeedRows(q, feed, today) {
-  const accounts = Array.isArray(feed.accounts) ? feed.accounts : JSON.parse(feed.accounts || '[]');
+  const accounts = feedAccounts(feed);
   const { where, params } = accountFilter(accounts);
   if (feed.window_rule === 'budgets_current') {
     const rows = await exec(q, `select * from ads.v_budget_pools_current where ${where} order by is_shared desc, name`, params);
@@ -98,7 +99,8 @@ export async function pushFeed(q, feed, { today = todayIn(ET), dryRun = false } 
   const key = `feed:${feed.spreadsheet_id}:${feed.tab}`;
   const problems = [];
   if (values.length < (feed.min_rows ?? 50)) problems.push(`only ${values.length} rows (min ${feed.min_rows})`);
-  if (feed.window_rule !== 'budgets_current' && (!maxDate || maxDate < addDays(today, -2))) problems.push(`latest complete date ${maxDate || 'none'} is older than ${addDays(today, -2)}`);
+  // Weekday-only accounts (Teguar) have no weekend rows: an old max date is fine when ingest covered yesterday.
+  if (feed.window_rule !== 'budgets_current' && (!maxDate || maxDate < addDays(today, -2)) && feedDateStale({ maxDate, today, covered: !!maxDate && accountsCovered(await loadCoverage(q), feedAccounts(feed)) })) problems.push(`latest complete date ${maxDate || 'none'} is older than ${addDays(today, -2)}`);
   if (problems.length) {
     const msg = `Sheet feed ${feed.tab} not written: ${problems.join('; ')}`;
     await exec(q, 'update ads.sheet_feeds set last_error = $2 where feed_id = $1', [feed.feed_id, msg]);
