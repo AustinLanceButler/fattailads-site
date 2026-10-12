@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'POST') {
       const provider = String(readBody(req).provider || '');
-      if (!['google', 'microsoft'].includes(provider)) return sendError(res, 400, 'invalid_input', 'Unknown provider.');
+      if (!['google', 'google_personal', 'microsoft'].includes(provider)) return sendError(res, 400, 'invalid_input', 'Unknown provider.');
       try {
         await accessToken(provider);
       } catch (err) {
@@ -22,7 +22,11 @@ export default async function handler(req, res) {
     }
     return sendJson(res, {
       credentials: await credentialStatus(),
-      configured: { google: !!(process.env.FTA_GOOGLE_CLIENT_ID && process.env.FTA_GOOGLE_CLIENT_SECRET), microsoft: !!msClientId() },
+      configured: {
+        google: !!(process.env.FTA_GOOGLE_CLIENT_ID && process.env.FTA_GOOGLE_CLIENT_SECRET),
+        google_personal: !!(process.env.FTA_GOOGLE_CLIENT_ID && process.env.FTA_GOOGLE_CLIENT_SECRET),
+        microsoft: !!msClientId(),
+      },
     });
   } catch (err) {
     console.error('[connect/admin/fta]', err.message);
