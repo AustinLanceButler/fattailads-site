@@ -39,23 +39,47 @@ export function assessAccount({ platform, timezone, runs = [], lastCompleteDate,
   return { yesterday, ok: !problems.length, problems, notices };
 }
 
+// A feed's newest date may lag on weekends for weekday-only accounts; it is only
+// stale when it is missing, or old AND some feed account lacks ingest coverage.
+export function feedDateStale({ maxDate, today, covered }) {
+  const md = ymd(maxDate);
+  return !md || (md < addDays(today, -2) && !covered);
+}
+
+// Recent ok ingest runs + timezone per account, keyed 'platform:account_id'.
+export async function loadCoverage(q) {
+  const accts = await exec(q, 'select platform, account_id, timezone from ads.ad_accounts');
+  const recent = await exec(q, `select platform, account_id, status, window_from, window_to, started_at from ads.ingest_runs
+    where status = 'ok' and account_id is not null and started_at > now() - interval '3 days'`);
+  const cov = new Map(accts.map((a) => [`${a.platform}:${a.account_id}`, { platform: a.platform, timezone: a.timezone, runs: [] }]));
+  for (const r of recent) {
+    const c = cov.get(`${r.platform}:${r.account_id}`);
+    if (c) c.runs.push(r);
+  }
+  return cov;
+}
+
+// True when every listed account has an ok run covering its yesterday.
+export function accountsCovered(cov, accounts, now = Date.now()) {
+  if (!accounts || !accounts.length) return false;
+  return accounts.every((a) => {
+    const c = cov.get(`${a.platform}:${a.account_id}`);
+    if (!c) return false;
+    const tz = c.timezone || defaultTimezone(c.platform);
+    return c.runs.some((r) => runCoversDay(r, addDays(todayIn(tz, new Date(now)), -1), tz));
+  });
+}
+
 export async function checkHealth(q, { maxAgeHours = 26, notify = true } = {}) {
   const now = Date.now();
   const accounts = await exec(q, `select h.*, a.timezone from ads.v_feed_health h
     join ads.ad_accounts a using (platform, account_id) where h.enabled order by h.client_id, h.platform, h.account_id`);
-  const recent = await exec(q, `select platform, account_id, status, window_from, window_to, started_at from ads.ingest_runs
-    where status = 'ok' and account_id is not null and started_at > now() - interval '3 days'`);
-  const runsBy = new Map();
-  for (const r of recent) {
-    const k = `${r.platform}:${r.account_id}`;
-    if (!runsBy.has(k)) runsBy.set(k, []);
-    runsBy.get(k).push(r);
-  }
+  const cov = await loadCoverage(q);
   const out = { accounts: [], feeds: [], alerts: 0 };
   for (const a of accounts) {
     const lastComplete = ymd(a.last_complete_date);
     const { ok, problems, notices } = assessAccount({
-      platform: a.platform, timezone: a.timezone, runs: runsBy.get(`${a.platform}:${a.account_id}`) || [],
+      platform: a.platform, timezone: a.timezone, runs: (cov.get(`${a.platform}:${a.account_id}`) || {}).runs || [],
       lastCompleteDate: lastComplete, lastOkAt: a.last_ok_at, lastError: a.last_error, now, maxAgeHours,
     });
     const key = `account:${a.platform}:${a.account_id}`;
@@ -72,7 +96,7 @@ export async function checkHealth(q, { maxAgeHours = 26, notify = true } = {}) {
     if (!f.last_pushed_at || now - new Date(f.last_pushed_at).getTime() > maxAgeHours * HOURS) problems.push(`not pushed in ${maxAgeHours}h`);
     if (f.window_rule !== 'budgets_current') {
       const md = ymd(f.last_max_date);
-      if (!md || md < addDays(today, -2)) problems.push(`max date ${md || 'none'} older than ${addDays(today, -2)}`);
+      if (feedDateStale({ maxDate: md, today, covered: accountsCovered(cov, feedAccounts(f), now) })) problems.push(`max date ${md || 'none'} older than ${addDays(today, -2)}`);
     }
     if (f.last_error) problems.push(`last error: ${f.last_error.slice(0, 200)}`);
     const key = `feed:${f.spreadsheet_id}:${f.tab}`;
@@ -83,4 +107,8 @@ export async function checkHealth(q, { maxAgeHours = 26, notify = true } = {}) {
     out.feeds.push({ feed_id: f.feed_id, tab: f.tab, last_pushed_at: f.last_pushed_at, last_max_date: f.last_max_date, ok: !problems.length, problems });
   }
   return out;
+}
+
+export function feedAccounts(feed) {
+  return Array.isArray(feed.accounts) ? feed.accounts : JSON.parse(feed.accounts || '[]');
 }

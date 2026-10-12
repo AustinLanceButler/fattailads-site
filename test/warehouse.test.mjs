@@ -8,7 +8,7 @@ import { projectRow } from '../api/_lib/feeds.mjs';
 import { colLetter, normalizeSaKey, saKeyShape } from '../api/_lib/sheets.mjs';
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
-import { assessAccount, runCoversDay } from '../api/_lib/health.mjs';
+import { assessAccount, runCoversDay, accountsCovered, feedDateStale } from '../api/_lib/health.mjs';
 
 test('dates: arithmetic and windows', () => {
   assert.equal(addDays('2026-10-04', -35), '2026-08-30');
@@ -162,4 +162,26 @@ test('health: freshness follows ingest coverage, not rows (weekday-only accounts
   assert.equal(runCoversDay({ ...okRun, status: 'pending_report' }, '2026-10-11', tz), false);
   // Microsoft defaults to Central when the account has no zone: 04:15 CT Monday covers Sunday.
   assert.equal(assessAccount({ ...base, platform: 'microsoft', timezone: null, runs: [{ ...okRun, started_at: '2026-10-12T09:15:00Z' }], lastCompleteDate: '2026-10-09' }).ok, true);
+});
+
+test('health: sheet-feed date guard tolerates weekend gaps when ingest covered yesterday', () => {
+  const now = Date.parse('2026-10-12T09:50:00Z'); // Monday push-sheets run
+  const today = '2026-10-12';
+  const run = (started_at) => ({ status: 'ok', window_from: '2026-09-07', window_to: '2026-10-12', started_at });
+  const cov = new Map([
+    ['google:6942385423', { platform: 'google', timezone: 'America/New_York', runs: [run('2026-10-12T09:05:00Z')] }],
+    ['microsoft:138954119', { platform: 'microsoft', timezone: 'America/Chicago', runs: [run('2026-10-12T09:15:00Z')] }],
+    ['microsoft:999', { platform: 'microsoft', timezone: 'America/Chicago', runs: [run('2026-10-11T21:15:00Z')] }],
+  ]);
+  const teguar = [{ platform: 'google', account_id: '6942385423' }, { platform: 'microsoft', account_id: '138954119' }];
+  assert.equal(accountsCovered(cov, teguar, now), true);
+  assert.equal(accountsCovered(cov, [...teguar, { platform: 'microsoft', account_id: '999' }], now), false); // one account's run is from Sunday
+  assert.equal(accountsCovered(cov, [{ platform: 'meta', account_id: 'act_1' }], now), false); // unknown account
+  assert.equal(accountsCovered(cov, [], now), false);
+
+  // Friday max date on a Monday: fresh if covered, stale if not; a missing max date is always stale.
+  assert.equal(feedDateStale({ maxDate: '2026-10-09', today, covered: true }), false);
+  assert.equal(feedDateStale({ maxDate: '2026-10-09', today, covered: false }), true);
+  assert.equal(feedDateStale({ maxDate: '2026-10-11', today, covered: false }), false);
+  assert.equal(feedDateStale({ maxDate: null, today, covered: true }), true);
 });
