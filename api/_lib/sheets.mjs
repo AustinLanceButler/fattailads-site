@@ -76,20 +76,44 @@ async function api(method, path, body) {
 export const colLetter = (n) => { let s = ''; for (let x = n; x > 0; x = Math.floor((x - 1) / 26)) s = String.fromCharCode(65 + ((x - 1) % 26)) + s; return s; };
 const quoteTab = (tab) => `'${String(tab).replace(/'/g, "''")}'`;
 
-export async function getSheetId(spreadsheetId, tab, { create = true } = {}) {
-  const meta = await api('GET', `${spreadsheetId}?fields=sheets.properties(sheetId,title)`);
+// Find (or create) a tab: its numeric sheetId plus current grid size.
+async function getSheet(spreadsheetId, tab, { create = true } = {}) {
+  const meta = await api('GET', `${spreadsheetId}?fields=sheets.properties(sheetId,title,gridProperties(rowCount,columnCount))`);
   const hit = (meta.sheets || []).find((s) => s.properties.title === tab);
-  if (hit) return hit.properties.sheetId;
+  if (hit) return hit.properties;
   if (!create) return null;
   const r = await api('POST', `${spreadsheetId}:batchUpdate`, { requests: [{ addSheet: { properties: { title: tab } } }] });
-  return r.replies[0].addSheet.properties.sheetId;
+  return r.replies[0].addSheet.properties;
+}
+
+export async function getSheetId(spreadsheetId, tab, opts) {
+  const props = await getSheet(spreadsheetId, tab, opts);
+  return props ? props.sheetId : null;
+}
+
+// Rows/columns to append so header + data fit the tab's grid. Writing past the grid
+// is a 400 ("exceeds grid limits"), so grow first; rows get headroom (default 10%)
+// so day-over-day growth doesn't need an append on every push.
+export function gridShortfall({ rowCount = 0, columnCount = 0 } = {}, rows, width, headroom = 0.1) {
+  const needRows = (Array.isArray(rows) ? rows.length : Number(rows) || 0) + 1;
+  return {
+    rows: rowCount < needRows ? Math.ceil(needRows * (1 + headroom)) - rowCount : 0,
+    columns: columnCount < width ? width - columnCount : 0,
+  };
 }
 
 // Write a whole tab: optional header in row 1 (only rewritten when it differs),
-// rows from A2, stale tail cleared, date columns (1-based) formatted yyyy-mm-dd.
+// rows from A2 (grid grown first if too small), stale tail cleared, date columns (1-based) formatted yyyy-mm-dd.
 export async function writeTab(spreadsheetId, tab, { header = null, rows, dateColumns = [], chunk = 10000 }) {
-  const sheetId = await getSheetId(spreadsheetId, tab);
+  const { sheetId, gridProperties } = await getSheet(spreadsheetId, tab);
   const width = Math.max(header ? header.length : 0, ...rows.map((r) => r.length), 1);
+  const short = gridShortfall(gridProperties, rows, width);
+  if (short.rows || short.columns) {
+    await api('POST', `${spreadsheetId}:batchUpdate`, {
+      requests: [['ROWS', short.rows], ['COLUMNS', short.columns]].filter(([, n]) => n > 0)
+        .map(([dimension, length]) => ({ appendDimension: { sheetId, dimension, length } })),
+    });
+  }
   const last = colLetter(width);
   const t = quoteTab(tab);
 

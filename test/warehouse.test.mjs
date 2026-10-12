@@ -5,7 +5,7 @@ import { addDays, monthStartMinus, monthChunks, sheetSerial, windowStart, todayI
 import { parseCsv, num } from '../api/_lib/ingest/http.mjs';
 import { parseReportCsv, toYmd, REPORT_COLUMNS, mergeCampaignDays, downloadReport } from '../api/_lib/ingest/microsoft-ads.mjs';
 import { projectRow } from '../api/_lib/feeds.mjs';
-import { colLetter, normalizeSaKey, saKeyShape } from '../api/_lib/sheets.mjs';
+import { colLetter, gridShortfall, normalizeSaKey, saKeyShape } from '../api/_lib/sheets.mjs';
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
 import { assessAccount, runCoversDay, accountsCovered, feedDateStale } from '../api/_lib/health.mjs';
@@ -78,6 +78,18 @@ test('sheets: column letters', () => {
   assert.equal(colLetter(26), 'Z');
   assert.equal(colLetter(27), 'AA');
   assert.equal(colLetter(52), 'AZ');
+});
+
+test('sheets: grid shortfall before writing', () => {
+  const rows = (n) => Array.from({ length: n }, () => []);
+  // 2026-10-11 ACE Master 'Google Ads Data (SB)': 10,001-row grid, 15,536 data rows.
+  assert.deepEqual(gridShortfall({ rowCount: 10001, columnCount: 26 }, rows(15536), 12), { rows: Math.ceil(15537 * 1.1) - 10001, columns: 0 });
+  // Fits exactly (header + data) → nothing to append.
+  assert.deepEqual(gridShortfall({ rowCount: 101, columnCount: 5 }, rows(100), 5), { rows: 0, columns: 0 });
+  // One row short, and columns short.
+  assert.deepEqual(gridShortfall({ rowCount: 100, columnCount: 3 }, rows(100), 5), { rows: 112 - 100, columns: 2 });
+  assert.deepEqual(gridShortfall({ rowCount: 10, columnCount: 3 }, 100, 3, 0), { rows: 91, columns: 0 });
+  assert.deepEqual(gridShortfall(undefined, rows(0), 1), { rows: 2, columns: 1 });
 });
 
 test('migrations: ids unique, statements are single statements', () => {
