@@ -8,6 +8,7 @@ import { projectRow } from '../api/_lib/feeds.mjs';
 import { colLetter, normalizeSaKey, saKeyShape } from '../api/_lib/sheets.mjs';
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
+import { assessAccount, runCoversDay } from '../api/_lib/health.mjs';
 
 test('dates: arithmetic and windows', () => {
   assert.equal(addDays('2026-10-04', -35), '2026-08-30');
@@ -122,4 +123,43 @@ test('feeds: media_daily rows project to typed cells', () => {
   const row = { date: '2026-10-08', platform: 'microsoft', channel: 'Bing Search', market: 'Broward', tactic: 'Brand', spend: '14.20', impressions: '201', clicks: '2', conversions: '0.00', store_visits: '0.00' };
   assert.deepEqual(projectRow(row, ['date', 'platform', 'channel', 'market', 'tactic', 'spend', 'impressions', 'clicks', 'conversions', 'store_visits']),
     [sheetSerial('2026-10-08'), 'microsoft', 'Bing Search', 'Broward', 'Brand', 14.2, 201, 2, 0, 0]);
+});
+
+test('health: freshness follows ingest coverage, not rows (weekday-only accounts)', () => {
+  // Monday 2026-10-12 10:30 UTC (06:30 ET), when the feed-health cron runs.
+  const now = Date.parse('2026-10-12T10:30:00Z');
+  const tz = 'America/New_York';
+  const okRun = { status: 'ok', window_from: '2026-09-07', window_to: '2026-10-12', started_at: '2026-10-12T09:05:00Z' };
+  const base = { platform: 'google', timezone: tz, now, lastOkAt: '2026-10-12T09:06:00Z', lastError: null };
+
+  // Teguar: no Sat/Sun rows (last complete day Friday) but this morning's run covered Sunday → fresh.
+  const weekend = assessAccount({ ...base, runs: [okRun], lastCompleteDate: '2026-10-09' });
+  assert.equal(weekend.yesterday, '2026-10-11');
+  assert.equal(weekend.ok, true, weekend.problems.join('; '));
+  assert.deepEqual(weekend.notices, []);
+
+  // Same gap, but this morning's run failed: yesterday's last ok run started Sunday, so Sunday isn't complete → stale.
+  const sunRun = { ...okRun, window_to: '2026-10-11', started_at: '2026-10-11T21:05:00Z' };
+  const failed = assessAccount({ ...base, runs: [sunRun, { ...okRun, status: 'error' }], lastCompleteDate: '2026-10-09', lastOkAt: '2026-10-11T21:06:00Z', lastError: 'boom' });
+  assert.equal(failed.ok, false);
+  assert.match(failed.problems[0], /no successful ingest covering 2026-10-11/);
+
+  // No runs at all → stale on both signals.
+  const missing = assessAccount({ ...base, runs: [], lastCompleteDate: '2026-10-09', lastOkAt: null });
+  assert.equal(missing.ok, false);
+  assert.equal(missing.problems.length, 2);
+
+  // Ok runs every day but no rows for a week → fresh, with an info notice only.
+  const quiet = assessAccount({ ...base, runs: [okRun], lastCompleteDate: '2026-10-04' });
+  assert.equal(quiet.ok, true);
+  assert.match(quiet.notices[0], /no rows since 2026-10-04/);
+
+  // Coverage edges: window must include the day, and the run must start after the day ended locally.
+  assert.equal(runCoversDay(okRun, '2026-10-11', tz), true);
+  assert.equal(runCoversDay({ ...okRun, window_to: '2026-10-10' }, '2026-10-11', tz), false);
+  assert.equal(runCoversDay({ ...okRun, window_from: '2026-10-12' }, '2026-10-11', tz), false);
+  assert.equal(runCoversDay({ ...okRun, started_at: '2026-10-12T03:30:00Z' }, '2026-10-11', tz), false); // 23:30 ET Sunday
+  assert.equal(runCoversDay({ ...okRun, status: 'pending_report' }, '2026-10-11', tz), false);
+  // Microsoft defaults to Central when the account has no zone: 04:15 CT Monday covers Sunday.
+  assert.equal(assessAccount({ ...base, platform: 'microsoft', timezone: null, runs: [{ ...okRun, started_at: '2026-10-12T09:15:00Z' }], lastCompleteDate: '2026-10-09' }).ok, true);
 });
