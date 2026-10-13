@@ -2,7 +2,7 @@
 // Auth: `Authorization: Bearer $INGEST_ADMIN_SECRET`. Body: { action, ...params }.
 //
 //   probe            → what the stored credentials can see (Google MCC clients, Meta
-//                      ad accounts, Microsoft campaigns per configured account) + env flags
+//                      ad accounts, TikTok advertisers, Microsoft campaigns per configured account) + env flags
 //   seed             → { seed: {...} } upsert clients / ad_accounts / sheet_feeds / stores /
 //                      market_aliases / campaign_name_rules / conversion_labels (see db/seed.example.json)
 //   run              → { platform, account_id?, from?, to?, snapshots? } one ingest pass
@@ -19,6 +19,7 @@ import { runPlatform } from '../_lib/ingest/run.mjs';
 import { probeAccess } from '../_lib/ingest/google-ads.mjs';
 import { probeMeta } from '../_lib/ingest/meta.mjs';
 import { probeLinkedIn } from '../_lib/ingest/linkedin.mjs';
+import { probeTikTok } from '../_lib/ingest/tiktok.mjs';
 import { fetchCampaignsAndBudgets } from '../_lib/ingest/microsoft-ads.mjs';
 import { pushAllFeeds } from '../_lib/feeds.mjs';
 import { loadFunnelTab } from '../_lib/archive.mjs';
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
       }
       case 'run': {
         const platform = String(body.platform || '');
-        if (!['google', 'microsoft', 'meta', 'linkedin'].includes(platform)) return sendError(res, 400, 'invalid_input', 'platform must be google | microsoft | meta | linkedin.');
+        if (!['google', 'microsoft', 'meta', 'linkedin', 'tiktok'].includes(platform)) return sendError(res, 400, 'invalid_input', 'platform must be google | microsoft | meta | linkedin | tiktok.');
         for (const k of ['from', 'to']) if (body[k] && !isYmd(body[k])) return sendError(res, 400, 'invalid_input', `${k} must be YYYY-MM-DD.`);
         out = { results: await runPlatform(platform, { account_id: body.account_id ? String(body.account_id) : null, from: body.from || null, to: body.to || null, snapshots: body.snapshots !== false, job: body.job || null }) };
         break;
@@ -96,6 +97,7 @@ async function probe(q) {
   try { out.google = { mcc_clients: await probeAccess() }; } catch (err) { out.google = { error: err.message }; }
   if (env.META_ADS_TOKEN) { try { out.meta = await probeMeta(); } catch (err) { out.meta = { error: err.message }; } } else out.meta = { skipped: 'META_ADS_TOKEN not set' };
   try { out.linkedin = await probeLinkedIn(); } catch (err) { out.linkedin = { error: err.message }; }
+  try { out.tiktok = await probeTikTok(); } catch (err) { out.tiktok = { error: err.message }; }
   out.microsoft = [];
   for (const a of accounts.filter((x) => x.platform === 'microsoft')) {
     try {

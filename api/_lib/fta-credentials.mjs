@@ -10,6 +10,10 @@
 //   linkedin  — LinkedIn Marketing API (r_ads r_ads_reporting) for the ads warehouse,
 //               minted via /api/connect/admin/fta-linkedin on FTA_LINKEDIN_CLIENT_ID /
 //               FTA_LINKEDIN_CLIENT_SECRET. Separate from linkedin-mcp's own token.
+//   tiktok    — TikTok API for Business (Marketing API) for the ads warehouse, minted
+//               via /api/connect/admin/fta-tiktok on FTA_TIKTOK_APP_ID / FTA_TIKTOK_APP_SECRET.
+//               TikTok issues a long-lived access token and no refresh token, so the
+//               sealed value IS the access token; revoked or lapsed → reconnect.
 //   microsoft — Microsoft Advertising, via device-code sign-in on a public Entra app
 //               (FTA_MS_CLIENT_ID, no secret). Microsoft rotates the refresh token,
 //               so the newest one is written back on every refresh.
@@ -28,6 +32,7 @@ export const FTA_GOOGLE_SCOPES = [
 ];
 export const FTA_LINKEDIN_SCOPES = ['r_ads', 'r_ads_reporting'];
 export const LINKEDIN_TOKEN_URL = 'https://www.linkedin.com/oauth/v2/accessToken';
+export const TIKTOK_TOKEN_URL = 'https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/';
 export const FTA_MS_SCOPES = ['https://ads.microsoft.com/msads.manage', 'offline_access', 'openid', 'profile', 'email'];
 const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
 
@@ -55,11 +60,21 @@ const tokenCache = new Map();
 
 // Returns a fresh access token for the provider, or throws.
 export async function accessToken(provider) {
+  if (provider === 'tiktok') return staticToken(provider);
   const hit = tokenCache.get(provider);
   if (hit && Date.now() < hit.exp) return hit.token;
   const token = await refreshAccessToken(provider);
   if (provider === 'linkedin') tokenCache.set(provider, { token, exp: Date.now() + 50 * 60 * 1000 });
   return token;
+}
+
+async function staticToken(provider) {
+  const q = await db();
+  const [row] = await q`SELECT sealed_refresh FROM connect_fta_credentials WHERE provider = ${provider}`;
+  if (!row) throw Object.assign(new Error(`no ${provider} credential`), { code: 'not_connected' });
+  const payload = open(row.sealed_refresh, aad(provider));
+  if (!payload || !payload.r) throw Object.assign(new Error(`${provider} credential unreadable`), { code: 'unreadable' });
+  return payload.r;
 }
 
 async function refreshAccessToken(provider) {

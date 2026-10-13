@@ -192,9 +192,9 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
     });
   }
 
-  var FTA_LABEL = { google: 'Google (Ads, GA4, GTM, Search Console, Merchant, GBP)', google_personal: 'Google, personal login (white-label accounts)', microsoft: 'Microsoft Advertising', linkedin: 'LinkedIn Ads (ads warehouse reporting)' };
+  var FTA_LABEL = { google: 'Google (Ads, GA4, GTM, Search Console, Merchant, GBP)', google_personal: 'Google, personal login (white-label accounts)', microsoft: 'Microsoft Advertising', linkedin: 'LinkedIn Ads (ads warehouse reporting)', tiktok: 'TikTok Ads (ads warehouse reporting)' };
   var FTA_MSG = {
-    google_ok: 'Google connected.', google_personal_ok: 'Personal Google login connected.', linkedin_ok: 'LinkedIn connected.', linkedin_partial: 'LinkedIn connected, but without both ad permissions. Connect again and allow everything.', linkedin_denied: 'LinkedIn sign-in was cancelled.', linkedin_state: 'That LinkedIn sign-in expired. Try again.', linkedin_failed: 'LinkedIn didn’t return a token. Check the app’s redirect URL and client secret, then try again.', linkedin_no_refresh: 'LinkedIn returned no refresh token: the app needs refresh tokens enabled (Marketing Developer Platform access).', google_personal_partial: 'Personal Google login connected, but some permissions were left unticked. Connect again and tick every box.', google_partial: 'Google connected, but some permissions were left unticked. Connect again and tick every box.',
+    google_ok: 'Google connected.', google_personal_ok: 'Personal Google login connected.', linkedin_ok: 'LinkedIn connected.', tiktok_ok: 'TikTok connected.', tiktok_denied: 'TikTok sign-in was cancelled.', tiktok_state: 'That TikTok sign-in expired. Try again.', tiktok_failed: 'TikTok didn’t return a token. Check the app’s Advertiser redirect URL and secret, then try again.', linkedin_partial: 'LinkedIn connected, but without both ad permissions. Connect again and allow everything.', linkedin_denied: 'LinkedIn sign-in was cancelled.', linkedin_state: 'That LinkedIn sign-in expired. Try again.', linkedin_failed: 'LinkedIn didn’t return a token. Check the app’s redirect URL and client secret, then try again.', linkedin_no_refresh: 'LinkedIn returned no refresh token: the app needs refresh tokens enabled (Marketing Developer Platform access).', google_personal_partial: 'Personal Google login connected, but some permissions were left unticked. Connect again and tick every box.', google_partial: 'Google connected, but some permissions were left unticked. Connect again and tick every box.',
     google_denied: 'Google sign-in was cancelled.', google_state: 'That sign-in expired. Try again.',
     google_failed: 'Google didn’t return a refresh token. Try again.', ms_ok: 'Microsoft Advertising connected.', ms_denied: 'Microsoft sign-in was cancelled or refused.', ms_state: 'That Microsoft sign-in expired. Try again.', ms_failed: 'Microsoft didn’t return a refresh token. Try again.', google_client: 'Google rejected the client credentials (invalid_client): FTA_GOOGLE_CLIENT_SECRET doesn’t match the ops-project client, or a new secret hasn’t propagated yet.', google_wrong_identity: 'That wasn’t the expected Google account: use austin@fattailads.com for the FTA row and your personal Gmail for the personal row.'
   };
@@ -202,7 +202,7 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
     return api('fta').then(function (d) {
       var rows = {};
       (d.credentials || []).forEach(function (c) { rows[c.provider] = c; });
-      document.getElementById('fta-body').innerHTML = ['google', 'google_personal', 'microsoft', 'linkedin'].map(function (p) {
+      document.getElementById('fta-body').innerHTML = ['google', 'google_personal', 'microsoft', 'linkedin', 'tiktok'].map(function (p) {
         var c = rows[p], configured = d.configured && d.configured[p];
         var status = !configured ? '<span class="pill bad">Not configured</span>'
           : !c ? '<span class="pill todo">Not connected</span>'
@@ -226,6 +226,8 @@ code { font-family: var(--font-mono); font-size: 12px; background: var(--paper-1
             location.href = API + 'fta-google?as=personal';
           } else if (p === 'linkedin') {
             location.href = API + 'fta-linkedin';
+          } else if (p === 'tiktok') {
+            location.href = API + 'fta-tiktok';
           } else {
             location.href = API + 'fta-microsoft-oauth';
           }
