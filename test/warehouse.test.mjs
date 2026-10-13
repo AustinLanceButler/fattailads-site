@@ -215,3 +215,32 @@ test('linkedin: adAnalytics element → ad_daily row, Restli date range', async 
   const today = analyticsRow({ pivotValues: ['urn:li:sponsoredCampaign:9'], dateRange: { start: { year: 2026, month: 10, day: 12 } } }, { accountId: '1', today: '2026-10-12' });
   assert.equal(today.is_complete, false);
 });
+
+test('tiktok: report row → ad_daily row, 30-day chunks, budget modes', async () => {
+  const { reportRow, reportChunks, campaignBudget, MAX_REPORT_DAYS } = await import('../api/_lib/ingest/tiktok.mjs');
+  const row = reportRow({
+    dimensions: { campaign_id: '1812345678901234', stat_time_day: '2026-10-09 00:00:00' },
+    metrics: { campaign_name: 'ACE | Tampa | Awareness', spend: '83.12', impressions: '40211', clicks: '212', conversion: '9' },
+  }, { accountId: '7012345678901234567', today: '2026-10-13', runId: 3 });
+  assert.deepEqual(row, {
+    platform: 'tiktok', account_id: '7012345678901234567', campaign_id: '1812345678901234', date: '2026-10-09',
+    cost: 83.12, clicks: 212, impressions: 40211, all_conversions: 9, conversions: 9, conversions_value: null,
+    is_complete: true, source: 'api', run_id: 3,
+  });
+  assert.equal(reportRow({ dimensions: { campaign_id: '1', stat_time_day: '2026-10-13 00:00:00' }, metrics: {} }, { accountId: '1', today: '2026-10-13' }).is_complete, false);
+  assert.equal(reportRow({ dimensions: {}, metrics: {} }, { accountId: '1', today: '2026-10-13' }), null);
+
+  assert.equal(MAX_REPORT_DAYS, 30);
+  assert.deepEqual(reportChunks('2026-09-08', '2026-10-13'), [['2026-09-08', '2026-10-07'], ['2026-10-08', '2026-10-13']]);
+  assert.deepEqual(reportChunks('2026-10-13', '2026-10-13'), [['2026-10-13', '2026-10-13']]);
+  const year = reportChunks('2025-01-01', '2025-12-31');
+  assert.equal(year[0][0], '2025-01-01');
+  assert.equal(year.at(-1)[1], '2025-12-31');
+  for (let i = 1; i < year.length; i++) assert.equal(year[i][0] > year[i - 1][1], true);
+
+  const ag = new Map([['2', 45]]);
+  assert.deepEqual(campaignBudget({ campaign_id: '1', budget_mode: 'BUDGET_MODE_DAY', budget: 50 }, ag), { amount: 50, budget_status: 'daily', budget_scope: 'campaign' });
+  assert.deepEqual(campaignBudget({ campaign_id: '1', budget_mode: 'BUDGET_MODE_TOTAL', budget: 900 }, ag), { amount: null, budget_status: 'lifetime', budget_scope: 'campaign' });
+  assert.deepEqual(campaignBudget({ campaign_id: '2', budget_mode: 'BUDGET_MODE_INFINITE', budget: 0 }, ag), { amount: 45, budget_status: 'daily', budget_scope: 'adsets_sum' });
+  assert.deepEqual(campaignBudget({ campaign_id: '3', budget_mode: 'BUDGET_MODE_INFINITE' }, ag), { amount: null, budget_status: null, budget_scope: 'adsets_sum' });
+});

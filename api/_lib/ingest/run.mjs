@@ -7,10 +7,11 @@ import { ingestGoogle } from './google-ads.mjs';
 import { ingestMicrosoft, drainPending } from './microsoft-ads.mjs';
 import { ingestMeta } from './meta.mjs';
 import { ingestLinkedIn } from './linkedin.mjs';
+import { ingestTikTok } from './tiktok.mjs';
 
 export const DEFAULT_LOOKBACK_DAYS = 35;
 
-const INGEST = { google: ingestGoogle, microsoft: ingestMicrosoft, meta: ingestMeta, linkedin: ingestLinkedIn };
+const INGEST = { google: ingestGoogle, microsoft: ingestMicrosoft, meta: ingestMeta, linkedin: ingestLinkedIn, tiktok: ingestTikTok };
 
 // opts: { from, to, account_id, snapshots, job }
 export async function runPlatform(platform, opts = {}) {
