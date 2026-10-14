@@ -7,7 +7,8 @@
 //   the Cloud project behind the OAuth client, so no developer-token header is sent.
 // Microsoft Advertising: AddClientLinks (AccountLink, bill-to-client) from the FTA
 //   manager customer; the client accepts under Accounts & Billing → Requests.
-//   SOAP v13; element order inside ClientLink must stay alphabetical (WCF).
+//   SOAP v13; elements must follow the WSDL sequence (NOT alphabetical) or WCF drops them.
+//   The client account must be post-pay with a payment method — prepaid can't be linked.
 //
 // Each function returns { status, detail } where status is one of
 //   'invite_sent' | 'verified' | 'pending' | 'failed'.
@@ -101,7 +102,7 @@ function msErrors(xml) {
 export async function microsoftLinkStatus(accountNumber) {
   const body = `<SearchClientLinksRequest xmlns="https://bingads.microsoft.com/Customer/v13">
 <Predicates xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities">
-<e:Predicate><e:Field>ManagingCustomerId</e:Field><e:Operator>Equals</e:Operator><e:Value>${xmlEsc(msManagerCustomerId())}</e:Value></e:Predicate>
+<e:Predicate><e:Field>DirectManagingCustomerId</e:Field><e:Operator>Equals</e:Operator><e:Value>${xmlEsc(msManagerCustomerId())}</e:Value></e:Predicate>
 </Predicates>
 <Ordering i:nil="true" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"/>
 <PageInfo xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities"><e:Index>0</e:Index><e:Size>1000</e:Size></PageInfo>
@@ -111,9 +112,10 @@ export async function microsoftLinkStatus(accountNumber) {
   const links = tags(r.text, 'ClientLink').map((l) => ({ number: tag(l, 'ClientEntityNumber').toUpperCase(), status: tag(l, 'Status') }));
   const mine = links.filter((l) => l.number === String(accountNumber).toUpperCase()).map((l) => l.status);
   if (mine.includes('Active')) return { status: 'verified', detail: '' };
-  if (mine.some((s) => /Pending/.test(s))) return { status: 'pending', detail: 'Link request sent; waiting for the client to accept.' };
-  if (mine.some((s) => /Reject|Declin/.test(s))) return { status: 'failed', detail: 'The client declined the link request.' };
-  if (mine.some((s) => /Expired/.test(s))) return { status: 'failed', detail: 'The link request expired (30 days). Send it again.' };
+  if (mine.some((s) => /^Link(Pending|Accepted|InProgress)$/.test(s))) return { status: 'pending', detail: 'Link request sent; waiting for the client to accept.' };
+  if (mine.includes('LinkDeclined')) return { status: 'failed', detail: 'The client declined the link request.' };
+  if (mine.includes('LinkExpired')) return { status: 'failed', detail: 'The link request expired (30 days). Send it again.' };
+  if (mine.some((s) => /^Link(Canceled|Failed)$/.test(s))) return { status: 'failed', detail: `Microsoft link status: ${mine.join(', ')}` };
   return { status: 'none', detail: mine.length ? `Link status: ${mine.join(', ')}` : '' };
 }
 
@@ -123,17 +125,18 @@ export async function sendMicrosoftLink(accountNumber, clientName) {
   const existing = await microsoftLinkStatus(num);
   if (existing.status === 'verified') return { status: 'verified', detail: '' };
   if (existing.status === 'pending') return { status: 'invite_sent', detail: existing.detail };
-  // Alphabetical element order is required by the WCF data contract.
+  // Element order follows the WSDL ClientLink sequence: Type, ClientEntityNumber,
+  // ManagingCustomerId, Note, Name, IsBillToClient, SuppressNotification.
   const body = `<AddClientLinksRequest xmlns="https://bingads.microsoft.com/Customer/v13">
 <ClientLinks xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities">
 <e:ClientLink>
-<e:ClientEntityNumber>${xmlEsc(num)}</e:ClientEntityNumber>
-<e:IsBillToClient>true</e:IsBillToClient>
-<e:ManagingCustomerId>${xmlEsc(msManagerCustomerId())}</e:ManagingCustomerId>
-<e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || num}`.slice(0, 100))}</e:Name>
-<e:Note>Fat Tail Ads account access request</e:Note>
-<e:SuppressNotification>false</e:SuppressNotification>
 <e:Type>AccountLink</e:Type>
+<e:ClientEntityNumber>${xmlEsc(num)}</e:ClientEntityNumber>
+<e:ManagingCustomerId>${xmlEsc(msManagerCustomerId())}</e:ManagingCustomerId>
+<e:Note>Fat Tail Ads account access request</e:Note>
+<e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || num}`.slice(0, 100))}</e:Name>
+<e:IsBillToClient>true</e:IsBillToClient>
+<e:SuppressNotification>false</e:SuppressNotification>
 </e:ClientLink>
 </ClientLinks>
 </AddClientLinksRequest>`;
