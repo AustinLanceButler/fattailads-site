@@ -14,9 +14,14 @@
 //               via /api/connect/admin/fta-tiktok on FTA_TIKTOK_APP_ID / FTA_TIKTOK_APP_SECRET.
 //               TikTok issues a long-lived access token and no refresh token, so the
 //               sealed value IS the access token; revoked or lapsed → reconnect.
-//   microsoft — Microsoft Advertising, via device-code sign-in on a public Entra app
+//   microsoft — Microsoft Advertising, via redirect sign-in on a public Entra app
 //               (FTA_MS_CLIENT_ID, no secret). Microsoft rotates the refresh token,
-//               so the newest one is written back on every refresh.
+//               so the newest one is written back on every refresh. Austin's gmail:
+//               it sees the client accounts, so the ads warehouse reads with it.
+//   microsoft_agency — same app, signed in as austin@fattailads.com, whose only
+//               Microsoft Ads user lives in FTA's manager customer. Agency link
+//               requests use it: the gmail login is a separate Ads user per customer
+//               and the API acts as the client-side one, which can't link on FTA's behalf.
 
 import { db } from './db.mjs';
 import { open, seal } from './crypto.mjs';

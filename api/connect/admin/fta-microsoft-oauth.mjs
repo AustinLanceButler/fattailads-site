@@ -6,7 +6,8 @@
 // FTA_MS_CLIENT_ID is a PUBLIC client (no secret): this redirect URI is registered
 // under the "Mobile and desktop applications" platform in Entra, which lets the
 // server redeem the code with PKCE alone. The state + verifier ride in a sealed
-// cookie on the admin path, like the Google flow.
+// cookie on the admin path, like the Google flow. ?as=agency stores the result as
+// the microsoft_agency credential (austin@fattailads.com) instead of microsoft.
 
 import { allowMethods, baseUrl, clearCookie, sendError, setCookie } from '../../_lib/http.mjs';
 import { open, randomToken, safeEqual, seal, sha256Base64Url } from '../../_lib/crypto.mjs';
@@ -36,7 +37,8 @@ export default async function handler(req, res) {
   if (!qs.code && !qs.error) {
     const state = randomToken(32);
     const verifier = randomToken(48);
-    setCookie(res, COOKIE, seal({ s: state, v: verifier, exp: Date.now() + 1800000 }, AAD), { maxAge: 1800, path: ADMIN_COOKIE_PATH });
+    const provider = qs.as === 'agency' ? 'microsoft_agency' : 'microsoft';
+    setCookie(res, COOKIE, seal({ s: state, v: verifier, p: provider, exp: Date.now() + 1800000 }, AAD), { maxAge: 1800, path: ADMIN_COOKIE_PATH });
     const p = new URLSearchParams({
       client_id: msClientId(),
       redirect_uri: redirectUri,
@@ -78,8 +80,9 @@ export default async function handler(req, res) {
     }
     const claims = idTokenClaims(j.id_token);
     const identity = String(claims.preferred_username || claims.email || 'unknown').toLowerCase();
-    await saveCredential('microsoft', identity, j.refresh_token, j.scope || FTA_MS_SCOPES.join(' '));
-    await audit(null, 'fta_microsoft_connected', { admin, identity, via: 'redirect' });
+    const provider = saved.p === 'microsoft_agency' ? 'microsoft_agency' : 'microsoft';
+    await saveCredential(provider, identity, j.refresh_token, j.scope || FTA_MS_SCOPES.join(' '));
+    await audit(null, 'fta_microsoft_connected', { admin, identity, provider, via: 'redirect' });
     return back(res, { fta: 'ms_ok' });
   } catch (err) {
     console.error('[connect/admin/fta-microsoft-oauth]', err.message);
