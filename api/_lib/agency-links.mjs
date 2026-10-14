@@ -76,7 +76,11 @@ const xmlEsc = (s) => String(s).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': 
 async function msSoap(action, bodyXml) {
   const devToken = process.env.FTA_MSADS_DEVELOPER_TOKEN;
   if (!devToken) throw Object.assign(new Error('FTA_MSADS_DEVELOPER_TOKEN is not set'), { code: 'not_configured' });
-  const token = await accessToken('microsoft');
+  // Agency links act as FTA's own Ads user; fall back to the gmail credential if unset.
+  const token = await accessToken('microsoft_agency').catch((err) => {
+    if (err.code === 'not_connected') return accessToken('microsoft');
+    throw err;
+  });
   const envelope = `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
 <s:Header xmlns="https://bingads.microsoft.com/Customer/v13">
 <Action s:mustUnderstand="1">${action}</Action>
