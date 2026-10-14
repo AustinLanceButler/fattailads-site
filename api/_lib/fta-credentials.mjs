@@ -22,6 +22,8 @@
 //               Microsoft Ads user lives in FTA's manager customer. Agency link
 //               requests use it: the gmail login is a separate Ads user per customer
 //               and the API acts as the client-side one, which can't link on FTA's behalf.
+//               Optional: without it, agency links use the `google` credential
+//               (austin@fattailads.com) with Microsoft's IdentityProvider: Google header.
 
 import { db } from './db.mjs';
 import { open, seal } from './crypto.mjs';
