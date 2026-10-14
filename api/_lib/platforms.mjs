@@ -123,9 +123,10 @@ function catalogue() {
     },
     microsoft_ads: {
       label: 'Microsoft Advertising', group: 'Microsoft', role: 'Account link (you keep billing)', mechanism: 'agency',
-      intro: 'Tell us your Microsoft Advertising account number. We’ll send a link request from the Fat Tail Ads manager account. Billing stays with you.',
+      intro: 'Tell us your Microsoft Advertising account ID. We’ll send a link request from the Fat Tail Ads manager account. Billing stays with you.',
       fields: [
-        { key: 'accountNumber', label: 'Account number', hint: 'Accounts & Billing → Accounts, like B012ABCD', required: true, check: alnum(6, 12), error: 'Enter the account number, letters and numbers like B012ABCD.' },
+        { key: 'accountId', label: 'Account ID', hint: 'Open the account in ads.microsoft.com — it’s the number after aid= in the address bar', required: true, check: digits(5, 15), error: 'Enter the account ID — numbers only, from aid= in the address bar.' },
+        { key: 'accountNumber', label: 'Account number', hint: 'Optional — Accounts & Billing → Accounts, like B012ABCD', check: (v) => (String(v || '').trim() ? alnum(6, 12)(v) : { ok: true, value: '' }), error: 'The account number is letters and numbers, like B012ABCD.' },
         { key: 'customerId', label: 'Customer ID', hint: 'Optional — the number in your ads.microsoft.com URL after cid=', check: (v) => (String(v || '').trim() ? digits(5, 15)(v) : { ok: true, value: '' }), error: 'The customer ID is numbers only.' },
       ],
       after: [

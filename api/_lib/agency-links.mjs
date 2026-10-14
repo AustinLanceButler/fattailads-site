@@ -99,7 +99,12 @@ function msErrors(xml) {
     .filter((s) => s && s !== ':');
 }
 
-export async function microsoftLinkStatus(accountNumber) {
+// Microsoft account links key on the numeric account ID (aid=). Older items only have
+// the account number, which AddClientLinks accepts for customer links only.
+const msRef = (input) => ({ id: String((input && input.accountId) || '').replace(/\D/g, ''), number: String((input && input.accountNumber) || '').toUpperCase() });
+
+export async function microsoftLinkStatus(input) {
+  const ref = msRef(input);
   const body = `<SearchClientLinksRequest xmlns="https://bingads.microsoft.com/Customer/v13">
 <Predicates xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities">
 <e:Predicate><e:Field>DirectManagingCustomerId</e:Field><e:Operator>Equals</e:Operator><e:Value>${xmlEsc(msManagerCustomerId())}</e:Value></e:Predicate>
@@ -109,8 +114,8 @@ export async function microsoftLinkStatus(accountNumber) {
 </SearchClientLinksRequest>`;
   const r = await msSoap('SearchClientLinks', body);
   if (!r.ok) return { status: 'failed', detail: `Microsoft read-back failed: ${msErrors(r.text).join('; ') || `HTTP ${r.status}`}`.slice(0, 480) };
-  const links = tags(r.text, 'ClientLink').map((l) => ({ number: tag(l, 'ClientEntityNumber').toUpperCase(), status: tag(l, 'Status') }));
-  const mine = links.filter((l) => l.number === String(accountNumber).toUpperCase()).map((l) => l.status);
+  const links = tags(r.text, 'ClientLink').map((l) => ({ id: tag(l, 'ClientEntityId'), number: tag(l, 'ClientEntityNumber').toUpperCase(), status: tag(l, 'Status') }));
+  const mine = links.filter((l) => (ref.id && l.id === ref.id) || (ref.number && l.number === ref.number)).map((l) => l.status);
   if (mine.includes('Active')) return { status: 'verified', detail: '' };
   if (mine.some((s) => /^Link(Pending|Accepted|InProgress)$/.test(s))) return { status: 'pending', detail: 'Link request sent; waiting for the client to accept.' };
   if (mine.includes('LinkDeclined')) return { status: 'failed', detail: 'The client declined the link request.' };
@@ -119,22 +124,22 @@ export async function microsoftLinkStatus(accountNumber) {
   return { status: 'none', detail: mine.length ? `Link status: ${mine.join(', ')}` : '' };
 }
 
-export async function sendMicrosoftLink(accountNumber, clientName, { suppressNotification = false } = {}) {
-  const num = String(accountNumber || '').toUpperCase();
-  if (!/^[A-Z0-9]{6,12}$/.test(num)) return { status: 'failed', detail: 'Invalid account number.' };
-  const existing = await microsoftLinkStatus(num);
+export async function sendMicrosoftLink(input, clientName, { suppressNotification = false } = {}) {
+  const ref = msRef(input);
+  if (!/^\d{5,15}$/.test(ref.id)) return { status: 'failed', detail: 'Missing Microsoft account ID (aid=) — ask the client for it, then Send link again.' };
+  const existing = await microsoftLinkStatus(input);
   if (existing.status === 'verified') return { status: 'verified', detail: '' };
   if (existing.status === 'pending') return { status: 'invite_sent', detail: existing.detail };
-  // Element order follows the WSDL ClientLink sequence: Type, ClientEntityNumber,
-  // ManagingCustomerId, Note, Name, IsBillToClient, SuppressNotification.
+  // Element order follows the WSDL ClientLink sequence: Type, ClientEntityId,
+  // ManagingCustomerId, Note, Name, IsBillToClient, SuppressNotification. Name max 40 chars.
   const body = `<AddClientLinksRequest xmlns="https://bingads.microsoft.com/Customer/v13">
 <ClientLinks xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities">
 <e:ClientLink>
 <e:Type>AccountLink</e:Type>
-<e:ClientEntityNumber>${xmlEsc(num)}</e:ClientEntityNumber>
+<e:ClientEntityId>${xmlEsc(ref.id)}</e:ClientEntityId>
 <e:ManagingCustomerId>${xmlEsc(msManagerCustomerId())}</e:ManagingCustomerId>
 <e:Note>Fat Tail Ads account access request</e:Note>
-<e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || num}`.slice(0, 100))}</e:Name>
+<e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || ref.id}`.slice(0, 40))}</e:Name>
 <e:IsBillToClient>true</e:IsBillToClient>
 <e:SuppressNotification>${suppressNotification ? 'true' : 'false'}</e:SuppressNotification>
 </e:ClientLink>
@@ -153,12 +158,12 @@ export async function sendMicrosoftLink(accountNumber, clientName, { suppressNot
 // opts.isTest: test requests don't make Microsoft email the client account's admins.
 export async function sendAgencyLink(product, input, clientName, opts = {}) {
   if (product === 'google_ads') return sendGoogleAdsLink(input.customerId);
-  if (product === 'microsoft_ads') return sendMicrosoftLink(input.accountNumber, clientName, { suppressNotification: !!opts.isTest });
+  if (product === 'microsoft_ads') return sendMicrosoftLink(input, clientName, { suppressNotification: !!opts.isTest });
   return { status: 'failed', detail: 'Not an agency platform.' };
 }
 
 export async function agencyLinkStatus(product, input) {
   if (product === 'google_ads') return googleAdsLinkStatus(String(input.customerId || '').replace(/\D/g, ''));
-  if (product === 'microsoft_ads') return microsoftLinkStatus(input.accountNumber);
+  if (product === 'microsoft_ads') return microsoftLinkStatus(input);
   return { status: 'none', detail: '' };
 }
