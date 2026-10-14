@@ -119,7 +119,7 @@ export async function microsoftLinkStatus(accountNumber) {
   return { status: 'none', detail: mine.length ? `Link status: ${mine.join(', ')}` : '' };
 }
 
-export async function sendMicrosoftLink(accountNumber, clientName) {
+export async function sendMicrosoftLink(accountNumber, clientName, { suppressNotification = false } = {}) {
   const num = String(accountNumber || '').toUpperCase();
   if (!/^[A-Z0-9]{6,12}$/.test(num)) return { status: 'failed', detail: 'Invalid account number.' };
   const existing = await microsoftLinkStatus(num);
@@ -136,7 +136,7 @@ export async function sendMicrosoftLink(accountNumber, clientName) {
 <e:Note>Fat Tail Ads account access request</e:Note>
 <e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || num}`.slice(0, 100))}</e:Name>
 <e:IsBillToClient>true</e:IsBillToClient>
-<e:SuppressNotification>false</e:SuppressNotification>
+<e:SuppressNotification>${suppressNotification ? 'true' : 'false'}</e:SuppressNotification>
 </e:ClientLink>
 </ClientLinks>
 </AddClientLinksRequest>`;
@@ -148,9 +148,10 @@ export async function sendMicrosoftLink(accountNumber, clientName) {
 
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 
-export async function sendAgencyLink(product, input, clientName) {
+// opts.isTest: test requests don't make Microsoft email the client account's admins.
+export async function sendAgencyLink(product, input, clientName, opts = {}) {
   if (product === 'google_ads') return sendGoogleAdsLink(input.customerId);
-  if (product === 'microsoft_ads') return sendMicrosoftLink(input.accountNumber, clientName);
+  if (product === 'microsoft_ads') return sendMicrosoftLink(input.accountNumber, clientName, { suppressNotification: !!opts.isTest });
   return { status: 'failed', detail: 'Not an agency platform.' };
 }
 

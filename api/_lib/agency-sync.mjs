@@ -9,9 +9,12 @@ export async function syncAgencyItem(q, item, { clientName = '', actor = 'system
   const input = item.client_input || {};
   let result;
   try {
-    result = item.status === 'requested'
-      ? await sendAgencyLink(item.product, input, clientName)
-      : await agencyLinkStatus(item.product, input);
+    if (item.status === 'requested') {
+      const [req] = await q`SELECT is_test FROM connect_requests WHERE id = ${item.request_id}`;
+      result = await sendAgencyLink(item.product, input, clientName, { isTest: !!(req && req.is_test) });
+    } else {
+      result = await agencyLinkStatus(item.product, input);
+    }
   } catch (err) {
     // Missing FTA credential or config: leave the item as-is for a later run.
     await audit(item.request_id, 'agency_sync_skipped', { product: item.product, actor, reason: err.code || err.message });
