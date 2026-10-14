@@ -76,20 +76,29 @@ const xmlEsc = (s) => String(s).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': 
 async function msSoap(action, bodyXml) {
   const devToken = process.env.FTA_MSADS_DEVELOPER_TOKEN;
   if (!devToken) throw Object.assign(new Error('FTA_MSADS_DEVELOPER_TOKEN is not set'), { code: 'not_configured' });
-  // Agency links act as FTA's own Ads user; fall back to the gmail credential if unset.
-  const token = await accessToken('microsoft_agency').catch((err) => {
-    if (err.code === 'not_connected') return accessToken('microsoft');
-    throw err;
-  });
+  // Agency links must act as FTA's own Ads user, not the gmail login (a different Ads
+  // user per customer; the API picks the client-side one). Prefer a Microsoft-identity
+  // microsoft_agency credential; otherwise use the stored austin@fattailads.com Google
+  // login, which is the FTA manager's Super Admin and signs in to Microsoft Ads with
+  // Google — Microsoft accepts Google access tokens with IdentityProvider: Google.
+  let token; let idp = '';
+  try {
+    token = await accessToken('microsoft_agency');
+  } catch (err) {
+    if (err.code !== 'not_connected') throw err;
+    token = await accessToken('google');
+    idp = 'Google';
+  }
   const envelope = `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
 <s:Header xmlns="https://bingads.microsoft.com/Customer/v13">
 <Action s:mustUnderstand="1">${action}</Action>
 <AuthenticationToken>${xmlEsc(token)}</AuthenticationToken>
-<DeveloperToken>${xmlEsc(devToken)}</DeveloperToken>
+<DeveloperToken>${xmlEsc(devToken)}</DeveloperToken>${idp ? `
+<IdentityProvider>${idp}</IdentityProvider>` : ''}
 </s:Header>
 <s:Body>${bodyXml}</s:Body>
 </s:Envelope>`;
-  const r = await fetch(MS_CM_URL, { method: 'POST', headers: { 'content-type': 'text/xml; charset=utf-8', SOAPAction: action }, body: envelope });
+  const r = await fetch(MS_CM_URL, { method: 'POST', headers: { 'content-type': 'text/xml; charset=utf-8', SOAPAction: action, ...(idp ? { IdentityProvider: idp } : {}) }, body: envelope });
   return { ok: r.ok, status: r.status, text: await r.text() };
 }
 
