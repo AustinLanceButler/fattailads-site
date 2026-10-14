@@ -94,7 +94,7 @@ const tag = (xml, name) => { const m = new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[
 const tags = (xml, name) => [...xml.matchAll(new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[^>]*>([\\s\\S]*?)</(?:\\w+:)?${name}>`, 'g'))].map((m) => m[1]);
 function msErrors(xml) {
   return tags(xml, 'OperationError').concat(tags(xml, 'AdApiError'))
-    .map((e) => `${tag(e, 'ErrorCode') || tag(e, 'Code')}: ${tag(e, 'Message')}`.trim())
+    .map((e) => `${tag(e, 'ErrorCode') || tag(e, 'Code')}: ${tag(e, 'Message')}${tag(e, 'Details') || tag(e, 'Detail') ? ` (${tag(e, 'Details') || tag(e, 'Detail')})` : ''}`.trim())
     .concat(tag(xml, 'faultstring') ? [tag(xml, 'faultstring')] : [])
     .filter((s) => s && s !== ':');
 }
@@ -143,6 +143,8 @@ export async function sendMicrosoftLink(accountNumber, clientName, { suppressNot
   const r = await msSoap('AddClientLinks', body);
   const errs = msErrors(r.text);
   if (r.ok && !errs.length) return { status: 'invite_sent', detail: 'Link request sent from the Fat Tail Ads manager account.' };
+  // The response never contains credentials; log the raw body so a refusal can be diagnosed.
+  console.error('[agency-links] AddClientLinks refused', r.status, r.text.slice(0, 3000));
   return { status: 'failed', detail: `Microsoft refused the link request — ${errs.join('; ') || `HTTP ${r.status}`}`.slice(0, 480) };
 }
 
