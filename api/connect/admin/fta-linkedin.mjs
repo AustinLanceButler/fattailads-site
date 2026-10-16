@@ -1,10 +1,16 @@
 // GET /api/connect/admin/fta-linkedin — connect FTA's own LinkedIn sign-in for the ads
 // warehouse (admin only). Without ?code it starts consent; LinkedIn redirects back here
-// with ?code&state. Uses FTA_LINKEDIN_CLIENT_ID/SECRET (the FTA-LI-MCP app), scopes
-// r_ads r_ads_reporting. This redirect URI must be listed under the LinkedIn app's
-// Auth → Authorized redirect URLs. State rides in a sealed cookie, as for fta-google.
+// with ?code&state. Uses FTA_LINKEDIN_CLIENT_ID/SECRET (the warehouse's own app, FTA Ads
+// Warehouse), scopes r_ads r_ads_reporting. This redirect URI must be listed under the
+// LinkedIn app's Auth → Authorized redirect URLs. State rides in a sealed cookie, as for
+// fta-google.
+//
+// LinkedIn keeps ONE live grant per member+app: signing in here on linkedin-mcp's app
+// (FTA-LI-MCP, 238010228) revokes the MCP's token, and its re-auth revokes ours. So this
+// refuses to start consent when the client id is the MCP's, matched by sha256 prefix.
 
 import { allowMethods, baseUrl, clearCookie, sendError, setCookie } from '../../_lib/http.mjs';
+import { createHash } from 'node:crypto';
 import { randomToken, safeEqual, seal, open } from '../../_lib/crypto.mjs';
 import { ADMIN_COOKIE_PATH, requireAdmin } from '../../_lib/admin-session.mjs';
 import { FTA_LINKEDIN_SCOPES, LINKEDIN_TOKEN_URL, saveCredential } from '../../_lib/fta-credentials.mjs';
@@ -12,6 +18,9 @@ import { audit } from '../../_lib/db.mjs';
 
 const COOKIE = 'fta_ftal';
 const AAD = 'fta-linkedin-connect';
+// sha256(linkedin-mcp's LINKEDIN_CLIENT_ID), first 16 hex chars.
+const MCP_CLIENT_ID_SHA256 = '40551dd9caaac146';
+export const isMcpClientId = (id) => createHash('sha256').update(String(id)).digest('hex').startsWith(MCP_CLIENT_ID_SHA256);
 
 function back(res, params) {
   res.setHeader('Cache-Control', 'no-store');
@@ -26,6 +35,9 @@ export default async function handler(req, res) {
   if (!admin) return;
   if (!process.env.FTA_LINKEDIN_CLIENT_ID || !process.env.FTA_LINKEDIN_CLIENT_SECRET) {
     return sendError(res, 503, 'not_configured', 'Set FTA_LINKEDIN_CLIENT_ID and FTA_LINKEDIN_CLIENT_SECRET first.');
+  }
+  if (isMcpClientId(process.env.FTA_LINKEDIN_CLIENT_ID)) {
+    return sendError(res, 409, 'shared_app', "FTA_LINKEDIN_CLIENT_ID is linkedin-mcp's app; signing in would revoke the MCP's token. Use the warehouse's own LinkedIn app.");
   }
   const redirectUri = `${baseUrl(req)}/api/connect/admin/fta-linkedin`;
   const qs = req.query || {};

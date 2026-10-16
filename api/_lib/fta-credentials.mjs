@@ -9,7 +9,11 @@
 //               appear; a warehouse account opts in with config.credential.
 //   linkedin  — LinkedIn Marketing API (r_ads r_ads_reporting) for the ads warehouse,
 //               minted via /api/connect/admin/fta-linkedin on FTA_LINKEDIN_CLIENT_ID /
-//               FTA_LINKEDIN_CLIENT_SECRET. Separate from linkedin-mcp's own token.
+//               FTA_LINKEDIN_CLIENT_SECRET, which must belong to the warehouse's OWN
+//               LinkedIn developer app. LinkedIn keeps one live grant per member+app, so a
+//               sign-in here on linkedin-mcp's app (FTA-LI-MCP, 238010228) revokes the MCP's
+//               token and vice versa (the 10/14-16 outages). fta-linkedin refuses to start
+//               consent on the MCP's client id.
 //   tiktok    — TikTok API for Business (Marketing API) for the ads warehouse, minted
 //               via /api/connect/admin/fta-tiktok on FTA_TIKTOK_APP_ID / FTA_TIKTOK_APP_SECRET.
 //               TikTok issues a long-lived access token and no refresh token, so the
