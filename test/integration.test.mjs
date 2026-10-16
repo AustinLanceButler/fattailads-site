@@ -81,11 +81,14 @@ async function run(client) {
   // re-upsert restates cost
   await W.upsert(db, 'ad_daily', [{ platform: 'google', account_id: '1111111111', campaign_id: 'c1', date: '2026-10-03', cost: 2.31, clicks: 2, impressions: 6, all_conversions: 1, search_impression_share: 0.5, is_complete: true, source: 'api' }]);
   assert.equal((await q.query(`select count(*)::int n from ads.ad_daily`))[0].n, 4);
-  await W.upsert(db, 'conversion_actions', [{ platform: 'google', account_id: '1111111111', action_id: 'sv', name: 'Store visits', category: 'STORE_VISIT' }, { platform: 'google', account_id: '1111111111', action_id: 'qq', name: 'Get a Quick Quote' }]);
+  await W.upsert(db, 'conversion_actions', [{ platform: 'google', account_id: '1111111111', action_id: 'sv', name: 'Store visits', category: 'STORE_VISIT' }, { platform: 'google', account_id: '1111111111', action_id: 'qq', name: 'Get a Quick Quote' }, { platform: 'google', account_id: '1111111111', action_id: 'pc', name: 'First Time Phone Call', primary_for_goal: false }]);
   await q.query(`update ads.conversion_actions set report_label = 'Get a Quick Quote' where action_id = 'qq'`);
+  await q.query(`update ads.conversion_actions set report_label = 'First Time Phone Call' where action_id = 'pc'`);
   await W.upsert(db, 'conversions_daily', [
     { platform: 'google', account_id: '1111111111', campaign_id: 'c1', date: '2026-10-03', action_id: 'sv', category: 'STORE_VISIT', all_conversions: 7.33, conversions: 0 },
     { platform: 'google', account_id: '1111111111', campaign_id: 'c1', date: '2026-10-03', action_id: 'qq', category: 'LEAD', all_conversions: 2, conversions: 2 },
+    // secondary (non-primary) action: conversions = 0, Funnel reports all_conversions
+    { platform: 'google', account_id: '1111111111', campaign_id: 'c1', date: '2026-10-03', action_id: 'pc', category: 'PHONE_CALL_LEAD', all_conversions: 3, conversions: 0 },
   ]);
   await W.upsert(db, 'budgets', [{ platform: 'google', account_id: '1111111111', budget_id: 'b1', name: 'Dade pool', is_shared: true, status: 'ENABLED' }]);
   await W.upsert(db, 'campaign_budget_daily', [
@@ -106,7 +109,8 @@ async function run(client) {
   assert.equal(r1003.daily_budget_text, 'USD401.15/day');
   assert.equal(rows[0].daily_budget_text, 'USD300.00/day', 'budget as of 10-02 is the 10-01 snapshot');
   assert.equal(Number(r1003.store_visits), 7.33);
-  assert.deepEqual(r1003.conv_by_label, { 'Get a Quick Quote': 2 });
+  assert.deepEqual(r1003.conv_by_label, { 'Get a Quick Quote': 2, 'First Time Phone Call': 3 }, 'labeled columns sum all_conversions, so a secondary action still counts');
+  assert.equal(Number(r1003.labeled_conv_total), 5);
   const projected = projectRow(r1003, google.columns);
   assert.deepEqual(projected, [46298, 'Brand - Dade - 0804 - Maximize Store Visits', 2.31, 2, 6, 1, 7.33, 0.5, 'USD401.15/day']);
   const dry = await pushFeed(db, google, { today, dryRun: true });
