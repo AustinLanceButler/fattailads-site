@@ -1,8 +1,9 @@
 // api/_lib/ingest/linkedin.mjs — LinkedIn Marketing API (REST, versioned) → ads.*
 // Campaign-level daily analytics plus the campaign list (name, status, daily budget).
 // Token: FTA's own LinkedIn sign-in (provider 'linkedin' in connect_fta_credentials,
-// scopes r_ads r_ads_reporting), never the linkedin-mcp connector's token: LinkedIn
-// can rotate refresh tokens, so two consumers sharing one would invalidate each other.
+// scopes r_ads r_ads_reporting) on the warehouse's own LinkedIn app, never linkedin-mcp's
+// app or token. LinkedIn keeps one live grant per member+app, so two consumers on one
+// app revoke each other on every sign-in; see fta-credentials.mjs.
 
 import { upsert, syncCampaigns } from '../warehouse.mjs';
 import { todayIn } from '../dates.mjs';
