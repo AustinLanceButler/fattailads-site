@@ -9,6 +9,9 @@
 //   manager customer; the client accepts under Accounts & Billing → Requests.
 //   SOAP v13; elements must follow the WSDL sequence (NOT alphabetical) or WCF drops them.
 //   The client account must be post-pay with a payment method — prepaid can't be linked.
+//   AccountLink also needs ClientEntityCustomerNumber (the client's CUSTOMER number, not
+//   the account number). Without it Microsoft answers with a bare "Invalid client data"
+//   ApiFault and empty OperationErrors (the 10/14–10/17 refusals).
 //
 // Each function returns { status, detail } where status is one of
 //   'invite_sent' | 'verified' | 'pending' | 'failed'.
@@ -73,22 +76,26 @@ export async function sendGoogleAdsLink(customerId) {
 
 const xmlEsc = (s) => String(s).replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c]));
 
-async function msSoap(action, bodyXml) {
-  const devToken = process.env.FTA_MSADS_DEVELOPER_TOKEN;
-  if (!devToken) throw Object.assign(new Error('FTA_MSADS_DEVELOPER_TOKEN is not set'), { code: 'not_configured' });
-  // Agency links must act as FTA's own Ads user, not the gmail login (a different Ads
-  // user per customer; the API picks the client-side one). Prefer a Microsoft-identity
-  // microsoft_agency credential; otherwise use the stored austin@fattailads.com Google
-  // login, which is the FTA manager's Super Admin and signs in to Microsoft Ads with
-  // Google — Microsoft accepts Google access tokens with IdentityProvider: Google.
-  let token; let idp = '';
+// Agency links must act as FTA's own Ads user, not the gmail login (a different Ads
+// user per customer; the API picks the client-side one). Prefer a Microsoft-identity
+// microsoft_agency credential; otherwise use the stored austin@fattailads.com Google
+// login, which is the FTA manager's Super Admin and signs in to Microsoft Ads with
+// Google — Microsoft accepts Google access tokens with IdentityProvider: Google.
+async function agencyAuth() {
   try {
-    token = await accessToken('microsoft_agency');
+    return { token: await accessToken('microsoft_agency'), idp: '' };
   } catch (err) {
     if (err.code !== 'not_connected') throw err;
-    token = await accessToken('google');
-    idp = 'Google';
+    return { token: await accessToken('google'), idp: 'Google' };
   }
+}
+
+// opts.as: 'agency' (default) acts as FTA's manager user; 'warehouse' is the gmail
+// reporting login, used only for read-only lookups on accounts it can already see.
+export async function msSoap(action, bodyXml, { as = 'agency' } = {}) {
+  const devToken = process.env.FTA_MSADS_DEVELOPER_TOKEN;
+  if (!devToken) throw Object.assign(new Error('FTA_MSADS_DEVELOPER_TOKEN is not set'), { code: 'not_configured' });
+  const { token, idp } = as === 'warehouse' ? { token: await accessToken('microsoft'), idp: '' } : await agencyAuth();
   const envelope = `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
 <s:Header xmlns="https://bingads.microsoft.com/Customer/v13">
 <Action s:mustUnderstand="1">${action}</Action>
@@ -103,8 +110,8 @@ async function msSoap(action, bodyXml) {
 }
 
 // Tiny tag readers — the responses are small and flat enough for this.
-const tag = (xml, name) => { const m = new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[^>]*>([\\s\\S]*?)</(?:\\w+:)?${name}>`).exec(xml); return m ? m[1] : ''; };
-const tags = (xml, name) => [...xml.matchAll(new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[^>]*>([\\s\\S]*?)</(?:\\w+:)?${name}>`, 'g'))].map((m) => m[1]);
+export const tag = (xml, name) => { const m = new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[^>]*>([\\s\\S]*?)</(?:\\w+:)?${name}>`).exec(xml); return m ? m[1] : ''; };
+export const tags = (xml, name) => [...xml.matchAll(new RegExp(`<(?:\\w+:)?${name}(?=[\\s>])[^>]*>([\\s\\S]*?)</(?:\\w+:)?${name}>`, 'g'))].map((m) => m[1]);
 function msErrors(xml) {
   return tags(xml, 'OperationError').concat(tags(xml, 'AdApiError'))
     .map((e) => `${tag(e, 'ErrorCode') || tag(e, 'Code')}: ${tag(e, 'Message')}${tag(e, 'Details') || tag(e, 'Detail') ? ` (${tag(e, 'Details') || tag(e, 'Detail')})` : ''}`.trim())
@@ -114,7 +121,31 @@ function msErrors(xml) {
 
 // Microsoft account links key on the numeric account ID (aid=). Older items only have
 // the account number, which AddClientLinks accepts for customer links only.
-const msRef = (input) => ({ id: String((input && input.accountId) || '').replace(/\D/g, ''), number: String((input && input.accountNumber) || '').toUpperCase() });
+const msRef = (input) => ({
+  id: String((input && input.accountId) || '').replace(/\D/g, ''),
+  number: String((input && input.accountNumber) || '').toUpperCase(),
+  customerNumber: String((input && input.customerNumber) || '').trim().toUpperCase(),
+});
+
+// The client's customer number, for ClientEntityCustomerNumber. The client can type it
+// in the wizard; otherwise look it up read-only (GetAccount → ParentCustomerId →
+// GetCustomer → Number), first as FTA, then with the warehouse login, which can see
+// accounts Austin is already a user on (e.g. the Teguar test). '' when neither can.
+export async function resolveMsCustomerNumber(accountId) {
+  for (const as of ['agency', 'warehouse']) {
+    try {
+      const a = await msSoap('GetAccount', `<GetAccountRequest xmlns="https://bingads.microsoft.com/Customer/v13"><AccountId>${xmlEsc(accountId)}</AccountId></GetAccountRequest>`, { as });
+      const parent = tag(a.text, 'ParentCustomerId');
+      if (!a.ok || !parent) continue;
+      const c = await msSoap('GetCustomer', `<GetCustomerRequest xmlns="https://bingads.microsoft.com/Customer/v13"><CustomerId>${xmlEsc(parent)}</CustomerId></GetCustomerRequest>`, { as });
+      const number = tag(c.text, 'Number').trim().toUpperCase();
+      if (c.ok && number) return number;
+    } catch (err) {
+      if (err.code === 'not_configured') throw err;
+    }
+  }
+  return '';
+}
 
 export async function microsoftLinkStatus(input) {
   const ref = msRef(input);
@@ -143,8 +174,11 @@ export async function sendMicrosoftLink(input, clientName, { suppressNotificatio
   const existing = await microsoftLinkStatus(input);
   if (existing.status === 'verified') return { status: 'verified', detail: '' };
   if (existing.status === 'pending') return { status: 'invite_sent', detail: existing.detail };
+  const customerNumber = ref.customerNumber || await resolveMsCustomerNumber(ref.id);
+  if (!customerNumber) return { status: 'failed', detail: 'Missing the client’s Microsoft customer number (Settings → Account settings, or Accounts & Billing). Add it to the item, then Send link again.' };
   // Element order follows the WSDL ClientLink sequence: Type, ClientEntityId,
-  // ManagingCustomerId, Note, Name, IsBillToClient, SuppressNotification. Name max 40 chars.
+  // ManagingCustomerId, Note, Name, IsBillToClient, SuppressNotification, …,
+  // ClientEntityCustomerNumber (last). Name max 40 chars.
   const body = `<AddClientLinksRequest xmlns="https://bingads.microsoft.com/Customer/v13">
 <ClientLinks xmlns:e="https://bingads.microsoft.com/Customer/v13/Entities">
 <e:ClientLink>
@@ -155,6 +189,7 @@ export async function sendMicrosoftLink(input, clientName, { suppressNotificatio
 <e:Name>${xmlEsc(`Fat Tail Ads - ${clientName || ref.id}`.slice(0, 40))}</e:Name>
 <e:IsBillToClient>true</e:IsBillToClient>
 <e:SuppressNotification>${suppressNotification ? 'true' : 'false'}</e:SuppressNotification>
+<e:ClientEntityCustomerNumber>${xmlEsc(customerNumber)}</e:ClientEntityCustomerNumber>
 </e:ClientLink>
 </ClientLinks>
 </AddClientLinksRequest>`;

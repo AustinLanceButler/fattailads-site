@@ -128,6 +128,7 @@ function catalogue() {
         { key: 'accountId', label: 'Account ID', hint: 'Open the account in ads.microsoft.com — it’s the number after aid= in the address bar', required: true, check: digits(5, 15), error: 'Enter the account ID — numbers only, from aid= in the address bar.' },
         { key: 'accountNumber', label: 'Account number', hint: 'Optional — Accounts & Billing → Accounts, like B012ABCD', check: (v) => (String(v || '').trim() ? alnum(6, 12)(v) : { ok: true, value: '' }), error: 'The account number is letters and numbers, like B012ABCD.' },
         { key: 'customerId', label: 'Customer ID', hint: 'Optional — the number in your ads.microsoft.com URL after cid=', check: (v) => (String(v || '').trim() ? digits(5, 15)(v) : { ok: true, value: '' }), error: 'The customer ID is numbers only.' },
+        { key: 'customerNumber', label: 'Customer number', hint: 'Optional — Settings → Account settings, letters and numbers', check: (v) => (String(v || '').trim() ? alnum(6, 12)(v) : { ok: true, value: '' }), error: 'The customer number is letters and numbers.' },
       ],
       after: [
         'Watch for the request in Microsoft Advertising: **Tools → Accounts & Billing → Requests**, then **Accept** the one from **Fat Tail Ads, LLC**.',
