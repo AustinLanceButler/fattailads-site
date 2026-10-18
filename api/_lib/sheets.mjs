@@ -102,11 +102,19 @@ export function gridShortfall({ rowCount = 0, columnCount = 0 } = {}, rows, widt
   };
 }
 
+// Widest of header and rows (min 1). A loop, not Math.max(...rows): spreading
+// ~100k+ rows as call arguments overflows the stack (ACE Google, 140k rows).
+export function tabWidth(header, rows) {
+  let width = Math.max(header ? header.length : 0, 1);
+  for (const r of rows) if (r.length > width) width = r.length;
+  return width;
+}
+
 // Write a whole tab: optional header in row 1 (only rewritten when it differs),
 // rows from A2 (grid grown first if too small), stale tail cleared, date columns (1-based) formatted yyyy-mm-dd.
 export async function writeTab(spreadsheetId, tab, { header = null, rows, dateColumns = [], chunk = 10000 }) {
   const { sheetId, gridProperties } = await getSheet(spreadsheetId, tab);
-  const width = Math.max(header ? header.length : 0, ...rows.map((r) => r.length), 1);
+  const width = tabWidth(header, rows);
   const short = gridShortfall(gridProperties, rows, width);
   if (short.rows || short.columns) {
     await api('POST', `${spreadsheetId}:batchUpdate`, {
