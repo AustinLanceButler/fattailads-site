@@ -12,7 +12,11 @@ never committed.
 |---|---|---|
 | `/` | `index.html` + `src/*.jsx` | Homepage SPA |
 | `/meet` | `meet.html` | Booking page (Google Calendar embed), `noindex` |
-| `/connect` | `connect.html` | Client access onboarding (Leadsie embed), `noindex` |
+| `/connect` | `connect.html` | Client access onboarding — still the Leadsie embed until the FTA Connect cutover, `noindex` |
+| `/connect/v2` | `connect-v2.html` | FTA Connect wizard, all 10 platforms (agency + guided), `noindex`, unlisted |
+| `/connect/beta` | `connect-beta.html` | FTA Connect Google sign-in prototype (GA4 / GTM one-click), `noindex`, unlisted |
+| `/connect/admin` | `connect-admin.html` | FTA Connect admin dashboard + follow-up queue, `noindex`, frame-denied |
+| `/connect/about` | `connect-about.html` | Public page describing FTA Connect and its Google API use (Google branding verification home page) |
 | `/privacy` | `privacy.html` | Privacy policy (incl. Google API Limited Use + Meta data deletion), indexable |
 | `/terms` | `terms.html` | Terms of service, indexable |
 
@@ -21,6 +25,55 @@ never committed.
 GTM container `GTM-KFF7DGR5`, with Consent Mode v2 defaults read from the
 `fta_cookie_consent` localStorage key. Page-view dataLayer events:
 `book_page_view` (`/meet`) and `connect_page_view` (`/connect`).
+
+## FTA Connect (Leadsie replacement)
+
+In-house client access onboarding. A client opens `/connect/v2`, picks platforms, and
+either types an account ID (agency platforms: FTA sends the link from its own manager
+account and verifies it) or follows guided steps and reports "I've added Fat Tail Ads"
+(the cron then checks FTA's own view where an API allows it). Requests and items live in
+Neon (`connect_requests`, `connect_items`); FTA's own platform tokens are sealed in
+`connect_fta_credentials`. `connect_completed` goes to GA4 (`source=fta_connect`) once
+every item is client-done. Leadsie stays on `/connect` until a real-client parallel run.
+
+| Platform | Mode | Verification |
+|---|---|---|
+| Google Ads | Agency: CustomerClientLink from MCC 673-311-0705 | Auto, link read-back (proven E2E 2026-10-02) |
+| Microsoft Advertising | Agency: AddClientLinks (bill-to-client) from customer 255066022 | Auto via SearchClientLinks. Client account must be **post-pay**; prepaid accounts are refused with a bare "Invalid client data" fault |
+| GA4, Google Tag Manager, Search Console | Guided (one-click OAuth on `/connect/beta` until Google verifies the app) | Auto against FTA's own Google token |
+| Meta, LinkedIn, Merchant Center, Business Profile, YouTube | Guided | Manual in `/connect/admin` |
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/connect/platforms` | Client-facing platform catalogue (`api/_lib/platforms.mjs`) |
+| `POST /api/connect/request` | Start a request; returns an unguessable `requestId` |
+| `POST /api/connect/submit` | Client finished a platform → `requested` (agency) or `client_reported` (guided) |
+| `GET /api/connect/status` | Per-product status for the wizard |
+| `/api/connect/google/*` | Client Google sign-in (beta) and the shared OAuth callback (also used by admin login) |
+| `/api/connect/admin/*` | Admin only (Google sign-in, allowlist `CONNECT_ADMIN_EMAILS`, 8 h session): `requests`, `item` (done/sent/failed/reopen), `send-link` (send or re-check now), `fta` + `fta-google` / `fta-microsoft-oauth` / `fta-linkedin` / `fta-tiktok` (connect FTA's own credentials), `ms-whoami` (read-only Microsoft identity check) |
+| `GET /api/cron/verify` | Every 15 min: sends queued agency links, reads back pending ones, auto-verifies guided grants. Refusals keep the item `requested`, write the reason to `fta_note` (never shown to the client) and log `[agency-links] … refused` to runtime logs |
+
+Code: `api/_lib/agency-links.mjs` (Google Ads + Microsoft SOAP v13), `agency-sync.mjs`,
+`guided-verify.mjs`, `fta-credentials.mjs`, `completion.mjs`. Test requests (`?test=1`)
+suppress Microsoft's email to the client.
+
+Environment variables (Production only; Google sign-in can't run on previews by design):
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Neon Postgres (Vercel Marketplace store `fta-connect`) |
+| `CONNECT_ENC_KEY` | Seals stored tokens and state cookies |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Client-facing OAuth app (Cloud project `fattailads-connect`) |
+| `FTA_GOOGLE_CLIENT_ID`, `FTA_GOOGLE_CLIENT_SECRET` | FTA's own Google identity (ops project; Google Ads API Basic access) |
+| `FTA_MS_CLIENT_ID`, `FTA_MSADS_DEVELOPER_TOKEN`, `FTA_MS_MANAGER_CUSTOMER_ID` | Microsoft Advertising (Entra app "FTA Connect", public client) |
+| `FTA_LINKEDIN_CLIENT_ID/SECRET`, `FTA_TIKTOK_APP_ID/SECRET` | Warehouse sign-ins connected from the admin page |
+| `CONNECT_ADMIN_EMAILS` | Admin allowlist |
+| `CONNECT_GOOGLE_ADS_MCC`, `CONNECT_META_BUSINESS_ID`, `CONNECT_LINKEDIN_URL`, `CONNECT_LINKEDIN_NAME`, `CONNECT_RECEIVING_EMAIL` | Receiving identities shown to clients |
+| `CRON_SECRET` | Bearer Vercel sends to `/api/cron/*` |
+
+Cutover (ClickUp "fta-connect: parallel-run … cut /connect over and cancel Leadsie"):
+point `build.mjs` `/connect` at the native wizard in one commit, keep
+`api/leadsie-webhook.mjs` 30 days, then delete it.
 
 ## API
 
