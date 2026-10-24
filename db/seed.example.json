@@ -80,7 +80,7 @@
     { "client_id": "acme", "platform": "microsoft", "priority": 50, "pattern": "^Brand - ([A-Za-z ]+?) - (\\d{3,4})\\y", "channel": "search", "tactic": "Brand", "market_group": 1, "store_group": 2 }
   ],
   "conversion_labels": [
-    { "platform": "google", "account_id": "1234567890", "match": "Get a Quick Quote", "report_label": "Get a Quick Quote" },
+    { "platform": "google", "account_id": "1234567890", "match": "^GAds - Submit Quick Quote$", "report_label": "Get a Quick Quote" },
     { "platform": "google", "account_id": "1234567890", "match": "Contact Form", "report_label": "Contact Form Submission" }
   ]
 }

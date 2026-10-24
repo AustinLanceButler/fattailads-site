@@ -9,6 +9,7 @@ import { colLetter, gridShortfall, normalizeSaKey, saKeyShape, tabWidth } from '
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
 import { assessAccount, runCoversDay, accountsCovered, feedDateStale } from '../api/_lib/health.mjs';
+import { conversionLabelConflicts } from '../api/_lib/conversion-labels.mjs';
 
 test('dates: arithmetic and windows', () => {
   assert.equal(addDays('2026-10-04', -35), '2026-08-30');
@@ -251,4 +252,35 @@ test('tiktok: report row → ad_daily row, 30-day chunks, budget modes', async (
   assert.deepEqual(campaignBudget({ campaign_id: '1', budget_mode: 'BUDGET_MODE_TOTAL', budget: 900 }, ag), { amount: null, budget_status: 'lifetime', budget_scope: 'campaign' });
   assert.deepEqual(campaignBudget({ campaign_id: '2', budget_mode: 'BUDGET_MODE_INFINITE', budget: 0 }, ag), { amount: 45, budget_status: 'daily', budget_scope: 'adsets_sum' });
   assert.deepEqual(campaignBudget({ campaign_id: '3', budget_mode: 'BUDGET_MODE_INFINITE' }, ag), { amount: null, budget_status: null, budget_scope: 'adsets_sum' });
+});
+
+test('conversion labels: a seed that would double-count a label is caught', () => {
+  // Teguar Google 6942385423 as of 2026-10-17: Quick Quote moved to the Google Ads tag.
+  const acct = { platform: 'google', account_id: '6942385423' };
+  const actions = [
+    { ...acct, action_id: '6679096977', name: 'Teguar (web) Get a Quick Quote', status: 'ENABLED', report_label: null },
+    { ...acct, action_id: '806451510', name: 'GAds - Submit Quick Quote', status: 'ENABLED', report_label: 'Get a Quick Quote' },
+    { ...acct, action_id: '588217874', name: 'Sidebar - Get a Quick Quote (New 2021)', status: 'HIDDEN', report_label: null },
+    { ...acct, action_id: '6801518095', name: 'First Time Phone Call', status: 'ENABLED', report_label: 'First Time Phone Call' },
+  ];
+  // Re-applying the original seed entry (match "Get a Quick Quote") re-tags the GA4 import.
+  const old = [{ ...acct, report_label: 'Get a Quick Quote', matched: ['6679096977', '588217874'] }];
+  const c = conversionLabelConflicts(actions, old);
+  assert.equal(c.length, 1);
+  assert.equal(c[0].report_label, 'Get a Quick Quote');
+  assert.deepEqual(c[0].actions.map((a) => a.action_id).sort(), ['6679096977', '806451510']);
+  // The HIDDEN sidebar action matched too, but records nothing, so it is not part of the conflict.
+  assert.ok(!c[0].actions.some((a) => a.action_id === '588217874'));
+  // The 10/17 relabel itself (clear the GA4 import, tag the Google Ads tag) is clean.
+  const relabel = [
+    { ...acct, report_label: null, matched: ['6679096977'] },
+    { ...acct, report_label: 'Get a Quick Quote', matched: ['806451510'] },
+  ];
+  assert.deepEqual(conversionLabelConflicts(actions, relabel), []);
+  // A later entry clearing the duplicate in the same seed resolves it.
+  assert.deepEqual(conversionLabelConflicts(actions, [...old, { ...acct, report_label: null, matched: ['6679096977'] }]), []);
+  // allow_multiple opts a label in deliberately.
+  assert.deepEqual(conversionLabelConflicts(actions, [{ ...old[0], allow_multiple: true }]), []);
+  // Seed entries carry account ids as numbers sometimes.
+  assert.equal(conversionLabelConflicts(actions, [{ ...old[0], account_id: 6942385423 }]).length, 1);
 });

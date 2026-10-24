@@ -7,6 +7,7 @@
 
 import { sql as neonSql } from './db.mjs';
 import { MIGRATIONS } from '../../db/migrations/index.mjs';
+import { conversionLabelConflicts } from './conversion-labels.mjs';
 
 let ready = null;
 let clientFactory = neonSql;
@@ -208,6 +209,8 @@ export async function listFeeds(q, { feed_id = null, includeDisabled = false } =
 // and client config stay in the database, never in this (public) repo.
 export async function applySeed(q, seed) {
   const out = {};
+  // Checked before any write, so a seed that would double-count changes nothing.
+  if ((seed.conversion_labels || []).length) await assertConversionLabelsSafe(q, seed.conversion_labels);
   for (const c of seed.clients || []) {
     await exec(q, `insert into ads.clients (client_id, display_name, timezone) values ($1, $2, coalesce($3, 'America/New_York'))
       on conflict (client_id) do update set display_name = excluded.display_name, timezone = excluded.timezone`, [c.client_id, c.display_name, c.timezone || null]);
@@ -255,10 +258,35 @@ export async function applySeed(q, seed) {
     out.campaign_name_rules = seed.campaign_name_rules.length;
   }
   for (const l of seed.conversion_labels || []) {
-    // { platform, account_id, match: 'regex on action name', report_label }
+    // { platform, account_id, match: 'regex on action name', report_label, allow_multiple? }
+    // report_label null clears the label. See conversion-labels.mjs for the guard.
     await exec(q, `update ads.conversion_actions set report_label = $4, updated_at = now() where platform = $1 and account_id = $2 and name ~* $3`,
       [l.platform, String(l.account_id), l.match, l.report_label]);
   }
   out.conversion_labels = (seed.conversion_labels || []).length;
   return out;
+}
+
+// Simulate the label updates with the database's own regex (~*), then refuse the
+// seed if a label would land on more than one live action in an account.
+async function assertConversionLabelsSafe(q, labels) {
+  const accounts = [...new Set(labels.map((l) => `${l.platform}|${String(l.account_id)}`))].map((k) => k.split('|'));
+  const actions = [];
+  for (const [platform, accountId] of accounts) {
+    actions.push(...await exec(q, `select platform, account_id, action_id, name, status, report_label from ads.conversion_actions where platform = $1 and account_id = $2`, [platform, accountId]));
+  }
+  const entries = [];
+  for (const l of labels) {
+    const rows = await exec(q, `select action_id from ads.conversion_actions where platform = $1 and account_id = $2 and name ~* $3`, [l.platform, String(l.account_id), l.match]);
+    entries.push({ ...l, matched: rows.map((r) => r.action_id) });
+  }
+  const conflicts = conversionLabelConflicts(actions, entries);
+  if (conflicts.length) {
+    const detail = conflicts.map((c) => `${c.platform} ${c.account_id} "${c.report_label}": ${c.actions.map((a) => `${a.name} (${a.action_id}, ${a.status})`).join(' + ')}`).join('; ');
+    const err = new Error(`Seed refused, nothing written: a conversion label would count more than one live action (double-counting). ${detail}. Narrow the match (anchor it with ^...$), clear the other action with report_label null, or set allow_multiple: true if both really are separate events.`);
+    err.code = 'conversion_label_conflict';
+    err.status = 409;
+    err.conflicts = conflicts;
+    throw err;
+  }
 }
