@@ -72,7 +72,7 @@ export default async function handler(req, res) {
     return sendJson(res, { action, ms: Date.now() - started, ...out });
   } catch (err) {
     console.error('[admin/ingest]', action, err);
-    return sendError(res, 500, err.code || 'server_error', String(err.message).slice(0, 800));
+    return sendError(res, err.status || 500, err.code || 'server_error', String(err.message).slice(0, 800));
   }
 }
 
