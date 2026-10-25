@@ -15,6 +15,7 @@ never committed.
 | `/connect` | `connect.html` | Client access onboarding (Leadsie embed), `noindex` |
 | `/privacy` | `privacy.html` | Privacy policy (incl. Google API Limited Use + Meta data deletion), indexable |
 | `/terms` | `terms.html` | Terms of service, indexable |
+| `/chartwatch/terms` | `chartwatch-terms.html` | Terms for the private Chart Watcher Epic app (linked from Epic's consent screen), `noindex`, no GTM |
 
 ## Measurement
 
