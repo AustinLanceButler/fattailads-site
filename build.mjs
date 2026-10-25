@@ -33,4 +33,8 @@ mkdirSync('dist/privacy', { recursive: true });
 copyFileSync('privacy.html', 'dist/privacy/index.html');
 mkdirSync('dist/terms', { recursive: true });
 copyFileSync('terms.html', 'dist/terms/index.html');
-console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,connect/v2,connect/admin,connect/about,privacy,terms}/index.html');
+// Chart Watcher (private family Epic FHIR app) terms -> /chartwatch/terms. The URL Epic shows
+// patients before they authorize the app. noindex, and deliberately no GTM/analytics.
+mkdirSync('dist/chartwatch/terms', { recursive: true });
+copyFileSync('chartwatch-terms.html', 'dist/chartwatch/terms/index.html');
+console.log('build complete: dist/app.js + dist/index.html + dist/{meet,connect,connect/beta,connect/v2,connect/admin,connect/about,privacy,terms,chartwatch/terms}/index.html');
