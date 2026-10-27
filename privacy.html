@@ -264,7 +264,7 @@ footer.bot .wrap {
     <h1 class="h1legal">Privacy policy.</h1>
     <p class="lede">How Fat Tail Ads collects, uses, and protects information &mdash; written to be read, not to be hidden behind.</p>
     <div class="meta-line">
-      <span>Last updated &middot; October 2, 2026</span>
+      <span>Last updated &middot; October 27, 2026</span>
       <span>Fat Tail Ads, LLC &middot; Florida, USA</span>
     </div>
   </section>
@@ -448,7 +448,7 @@ footer.bot .wrap {
 
         <section id="s11" class="legal-section">
           <h2 class="legal-h"><span class="legal-num">&sect;&nbsp;11</span><span>Google user data</span></h2>
-          <p class="legal-p">This section explains exactly which Google user data our client-access and account-management tool, <a href="/connect/about">FTA Connect</a>, accesses, why, and how we handle it. It covers two ways Google data reaches us.</p>
+          <p class="legal-p">This section explains exactly which Google user data our client-access and account-management tool, <a href="/connect/about">FTA Connect</a>, and our Business Profile assistant connector access, why, and how we handle it. It covers three ways Google data reaches us.</p>
 
           <h3 class="legal-sub">1. Clients who sign in with Google to grant access</h3>
           <p class="legal-p">On fattailads.com/connect, a client may sign in with Google and approve specific permissions so the tool can add our team to the Google products they select:</p>
@@ -470,10 +470,18 @@ footer.bot .wrap {
             <li><span class="legal-mark">&#9670;</span><span><strong>Sign in with Google</strong> (<code>openid</code>, <code>email</code>) &mdash; to identify which Fat Tail Ads staff member is signed in to the private admin console.</span></li>
           </ul>
 
+          <h3 class="legal-sub">3. Clients who sign in with Google to use our Business Profile assistant</h3>
+          <p class="legal-p">Clients can ask an AI assistant about their own Google Business Profile listings through a connector we run. The client signs in with their own Google account on the connector's sign-in page and approves:</p>
+          <ul class="legal-list">
+            <li><span class="legal-mark">&#9670;</span><span><strong>Sign in with Google</strong> (<code>openid</code>, <code>email</code>) &mdash; to identify the person signing in and match them to the login we created for them. Only people we have registered in advance can complete the sign-in.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span><strong>Business Profile APIs</strong> (<code>business.manage</code>) &mdash; to read the Business Profile accounts, locations, verification state, performance metrics, and reviews that the client's own Google account can see, only when the client asks the assistant a question. The connector makes no changes to any listing.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>We store that account's Google refresh token, encrypted at rest with AES-256-GCM, so the assistant can answer later questions without asking the client to sign in again. The results are shown to that client only. A client can end this access at any time by removing &ldquo;Fat Tail Ads&rdquo; at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a> or by asking us to delete the stored token, which we do immediately.</span></li>
+          </ul>
+
           <h3 class="legal-sub">How we store, protect, and retain Google data</h3>
           <ul class="legal-list">
             <li><span class="legal-mark">&#9670;</span><span>We store only what is needed to track access requests: account names and IDs, the access level, status, and dates, plus an audit log of each action.</span></li>
-            <li><span class="legal-mark">&#9670;</span><span>Fat Tail Ads' own Google refresh token is encrypted at rest with AES-256-GCM and is only used server-side. Client tokens are never stored.</span></li>
+            <li><span class="legal-mark">&#9670;</span><span>Fat Tail Ads' own Google refresh token, and the refresh token of a client who signs in to the Business Profile assistant connector, are encrypted at rest with AES-256-GCM and only used server-side. FTA Connect never stores a client's sign-in token.</span></li>
             <li><span class="legal-mark">&#9670;</span><span>Request records are kept for the life of the client engagement and up to 24 months afterwards, then deleted. You can ask us to delete them sooner (see &sect;21).</span></li>
           </ul>
 
