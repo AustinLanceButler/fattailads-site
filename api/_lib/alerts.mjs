@@ -36,7 +36,12 @@ async function createClickUpTask({ name, description }) {
   const r = await fetch(`https://api.clickup.com/api/v2/list/${encodeURIComponent(list)}/task`, {
     method: 'POST',
     headers: { Authorization: token, 'content-type': 'application/json' },
-    body: JSON.stringify({ name, markdown_description: description, priority: 2, tags: ['feed-alert'] }),
+    // 🐞 + due today + Austin as assignee: the morning brief lists only due/overdue cards
+    // and groups 🐞 ones as TECH alerts.
+    body: JSON.stringify({
+      name: `🐞 ${name}`, markdown_description: description, priority: 2, tags: ['feed-alert'],
+      assignees: [57231499], due_date: Date.now(), due_date_time: false,
+    }),
   });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(`ClickUp ${r.status}: ${j.err || j.error || ''}`);
