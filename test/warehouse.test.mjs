@@ -5,7 +5,7 @@ import { addDays, monthStartMinus, monthChunks, sheetSerial, windowStart, todayI
 import { parseCsv, num } from '../api/_lib/ingest/http.mjs';
 import { parseReportCsv, toYmd, REPORT_COLUMNS, mergeCampaignDays, downloadReport } from '../api/_lib/ingest/microsoft-ads.mjs';
 import { projectRow } from '../api/_lib/feeds.mjs';
-import { colLetter, gridShortfall, normalizeSaKey, saKeyShape, tabWidth } from '../api/_lib/sheets.mjs';
+import { clearBelowRange, colLetter, gridShortfall, normalizeSaKey, saKeyShape, tabWidth } from '../api/_lib/sheets.mjs';
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
 import { assessAccount, runCoversDay, accountsCovered, feedDateStale } from '../api/_lib/health.mjs';
@@ -283,4 +283,12 @@ test('conversion labels: a seed that would double-count a label is caught', () =
   assert.deepEqual(conversionLabelConflicts(actions, [{ ...old[0], allow_multiple: true }]), []);
   // Seed entries carry account ids as numbers sometimes.
   assert.equal(conversionLabelConflicts(actions, [{ ...old[0], account_id: 6942385423 }]).length, 1);
+});
+
+test('sheets: clearBelowRange skips rows past the grid', () => {
+  // _Feed Status: 7-row grid holding header + 6 rows has nothing below to clear.
+  assert.equal(clearBelowRange("'_Feed Status'", 7, 6), null);
+  assert.equal(clearBelowRange("'_Feed Status'", 8, 6), "'_Feed Status'!A8:ZZ");
+  assert.equal(clearBelowRange("'X'", 1000, 155), "'X'!A157:ZZ");
+  assert.equal(clearBelowRange("'X'", 1, 0), null);
 });
