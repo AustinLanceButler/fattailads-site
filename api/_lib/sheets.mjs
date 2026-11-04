@@ -102,6 +102,14 @@ export function gridShortfall({ rowCount = 0, columnCount = 0 } = {}, rows, widt
   };
 }
 
+// A1 range to clear below the data, or null when the grid has no rows past it
+// (asking for a row beyond the grid fails the whole push, e.g. a 7-row tab
+// holding a header plus 6 rows).
+export function clearBelowRange(tabA1, gridRowCount, dataRows) {
+  const first = dataRows + 2;
+  return first > gridRowCount ? null : `${tabA1}!A${first}:ZZ`;
+}
+
 // Widest of header and rows (min 1). A loop, not Math.max(...rows): spreading
 // ~100k+ rows as call arguments overflows the stack (ACE Google, 140k rows).
 export function tabWidth(header, rows) {
@@ -139,7 +147,8 @@ export async function writeTab(spreadsheetId, tab, { header = null, rows, dateCo
     await api('PUT', `${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`, { values: part });
   }
   // Clear anything below the new data (previous longer pushes). ZZ keeps it bounded.
-  await api('POST', `${spreadsheetId}/values/${encodeURIComponent(`${t}!A${rows.length + 2}:ZZ`)}:clear`, {});
+  const below = clearBelowRange(t, (gridProperties?.rowCount || 0) + short.rows, rows.length);
+  if (below) await api('POST', `${spreadsheetId}/values/${encodeURIComponent(below)}:clear`, {});
 
   if (dateColumns.length && rows.length) {
     await api('POST', `${spreadsheetId}:batchUpdate`, {
