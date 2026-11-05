@@ -9,6 +9,8 @@
     "sheet_feeds.source 'media_daily' reads ads.v_media_daily (date × channel × market × tactic, dims from campaign_name_rules) instead of the campaign-per-day feed — for dashboards.",
     "sheet_feeds.source 'campaign_dims' reads ads.v_campaign_dims_daily: one row per campaign per day with platform_label, channel, tactic, market, pacing_market, store_number and dims_source, so a pacing sheet can SUMIFS exact columns. Market comes from the store roster when the rule captures a store (store_group) and no market_group; leading zeros are ignored ('391' = '0391'). Unclassified rows read '(unmapped)'.",
     "market_rollups map a media market to the market a pacing sheet reports (e.g. Palm Beach North → Palm Beach); pacing_market falls back to market.",
+    "TikTok pixel events (off by default): ad_accounts.config.tiktok_events = [{ \"metric\": \"form\", \"name\": \"Coupon Lead\", \"category\": \"LEAD\" }] pulls that report metric per campaign per day as conversion action 'event:form'; then a conversion_labels entry { platform: 'tiktok', account_id, match: '^Coupon Lead$', report_label } exposes it as a conv:<label> column. Optional value_metric adds a value. Leave it unset until the pixel fires.",
+    "Depth columns any feed can request (0006): reach, frequency, video_play_actions, video_watched_2s, video_watched_6s, video_views_p25, video_views_p50, video_views_p75, video_views_p100, engaged_view, average_video_play. reach / frequency / average_video_play are per day per campaign: do not SUM them in a sheet.",
     "campaign_name_rules.pattern is a Postgres regex: word boundary is \\y, not \\b (\\b is a backspace there)."
   ],
   "clients": [

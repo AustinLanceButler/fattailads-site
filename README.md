@@ -61,6 +61,7 @@ Funnel.io".
 | Google Ads (searchStream GAQL, MCC login, FTA's stored token) | `api/_lib/ingest/google-ads.mjs` |
 | Microsoft Advertising (Reporting v13 REST + Campaign Management for shared budget pools) | `api/_lib/ingest/microsoft-ads.mjs` |
 | Meta Marketing API (Graph insights + campaign/ad-set budgets) | `api/_lib/ingest/meta.mjs` |
+| TikTok API for Business v1.3 (campaign + ad-group daily reports, reach / video depth, optional pixel events) | `api/_lib/ingest/tiktok.mjs` |
 | Runner, run log, failure isolation per account | `api/_lib/ingest/run.mjs`, `ads.ingest_runs` |
 | Sheets writer (service account, RAW values, real dates) | `api/_lib/sheets.mjs`, `api/_lib/feeds.mjs`, `ads.sheet_feeds` |
 | Staleness check → ClickUp alerts | `api/_lib/health.mjs`, `api/_lib/alerts.mjs`, `ads.alerts` |
@@ -91,6 +92,16 @@ Pacing sheets that need exact market / tactic / store columns read a `campaign_d
 (`ads.v_campaign_dims_daily`, migration 0005): campaign-per-day rows with the dimensions from
 `ads.campaign_dims` (store roster first, then the name rules), a `pacing_market` roll-up from
 `ads.market_rollups`, and `(unmapped)` values for anything the rules don't classify.
+
+Reach, frequency and the video funnel (`reach`, `frequency`, `video_play_actions`,
+`video_watched_2s` / `_6s`, `video_views_p25` … `p100`, `engaged_view`, `average_video_play`;
+migration 0006) are columns on `ads.ad_daily` and `ads.adgroup_daily`, and any feed can ask for
+them by name. TikTok fills them today; other platforms leave them NULL. `reach`, `frequency`
+and `average_video_play` are per-row only: never SUM them across days, campaigns or ad groups
+(`ads.v_media_daily` sums only the additive video counts). Ad-group rows read through
+`ads.v_adgroup_daily`. TikTok pixel events stay off until `ad_accounts.config.tiktok_events`
+lists them (see `db/seed.example.json`); each one then behaves like a Google conversion action
+(`event:<metric>`, labelled through `conversion_labels`, read as `conv:<label>`).
 
 Tests: `npm test` (pure functions). The end-to-end check needs a Postgres:
 `PG_TEST_URL=postgres:///postgres node --test test/integration.test.mjs`.

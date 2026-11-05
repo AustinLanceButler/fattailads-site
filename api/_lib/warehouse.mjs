@@ -45,6 +45,14 @@ async function migrate(q) {
 
 // ── table specs for upserts ──────────────────────────────────────────────────
 
+// Reach / frequency / video funnel (0006). reach, frequency and average_video_play
+// are NOT additive: never SUM them across days, campaigns or ad groups.
+export const DEPTH_TYPES = {
+  reach: 'bigint', frequency: 'numeric', video_play_actions: 'bigint', video_watched_2s: 'bigint', video_watched_6s: 'bigint',
+  video_views_p25: 'bigint', video_views_p50: 'bigint', video_views_p75: 'bigint', video_views_p100: 'bigint',
+  engaged_view: 'bigint', average_video_play: 'numeric',
+};
+
 export const TABLES = {
   ad_daily: {
     types: {
@@ -52,10 +60,39 @@ export const TABLES = {
       cost: 'numeric', clicks: 'bigint', impressions: 'bigint',
       all_conversions: 'numeric', conversions: 'numeric', conversions_value: 'numeric',
       search_impression_share: 'numeric', search_budget_lost_is: 'numeric', search_rank_lost_is: 'numeric',
+      ...DEPTH_TYPES,
       is_complete: 'boolean', source: 'text', run_id: 'bigint',
     },
     conflict: ['platform', 'account_id', 'campaign_id', 'date'],
     extraSet: 'ingested_at = now()',
+  },
+  adgroup_daily: {
+    types: {
+      platform: 'text', account_id: 'text', adgroup_id: 'text', date: 'date', campaign_id: 'text',
+      cost: 'numeric', clicks: 'bigint', impressions: 'bigint',
+      all_conversions: 'numeric', conversions: 'numeric', conversions_value: 'numeric',
+      ...DEPTH_TYPES,
+      is_complete: 'boolean', source: 'text', run_id: 'bigint',
+    },
+    conflict: ['platform', 'account_id', 'adgroup_id', 'date'],
+    extraSet: 'ingested_at = now()',
+  },
+  adgroups: {
+    types: {
+      platform: 'text', account_id: 'text', adgroup_id: 'text', campaign_id: 'text',
+      name: 'text', status: 'text', budget: 'numeric', budget_mode: 'text', first_seen: 'date', last_seen: 'date',
+    },
+    conflict: ['platform', 'account_id', 'adgroup_id'],
+    // A report-only sighting (deleted ad group) carries no status/budget; keep what the listing said.
+    merge: {
+      campaign_id: 'coalesce(excluded.campaign_id, ads.adgroups.campaign_id)',
+      status: 'coalesce(excluded.status, ads.adgroups.status)',
+      budget: 'coalesce(excluded.budget, ads.adgroups.budget)',
+      budget_mode: 'coalesce(excluded.budget_mode, ads.adgroups.budget_mode)',
+      first_seen: 'least(ads.adgroups.first_seen, excluded.first_seen)',
+      last_seen: 'greatest(ads.adgroups.last_seen, excluded.last_seen)',
+    },
+    extraSet: 'updated_at = now()',
   },
   conversions_daily: {
     types: {
@@ -122,7 +159,7 @@ export async function upsert(q, table, rows, { chunk = 1500 } = {}) {
   const colList = cols.join(', ');
   let conflictClause = '';
   if (spec.conflict) {
-    const updates = cols.filter((c) => !spec.conflict.includes(c)).map((c) => `${c} = excluded.${c}`);
+    const updates = cols.filter((c) => !spec.conflict.includes(c)).map((c) => `${c} = ${(spec.merge && spec.merge[c]) || `excluded.${c}`}`);
     if (spec.extraSet) updates.push(spec.extraSet);
     conflictClause = updates.length
       ? ` on conflict (${spec.conflict.join(', ')}) do update set ${updates.join(', ')}`
