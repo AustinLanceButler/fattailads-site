@@ -4,5 +4,6 @@ import * as m0002 from './0002_media_daily.mjs';
 import * as m0003 from './0003_tiktok.mjs';
 import * as m0004 from './0004_conv_labels_all_conversions.mjs';
 import * as m0005 from './0005_store_dims.mjs';
+import * as m0006 from './0006_delivery_depth.mjs';
 
-export const MIGRATIONS = [m0001, m0002, m0003, m0004, m0005];
+export const MIGRATIONS = [m0001, m0002, m0003, m0004, m0005, m0006];

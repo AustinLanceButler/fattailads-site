@@ -292,3 +292,171 @@ test('sheets: clearBelowRange skips rows past the grid', () => {
   assert.equal(clearBelowRange("'X'", 1000, 155), "'X'!A157:ZZ");
   assert.equal(clearBelowRange("'X'", 1, 0), null);
 });
+
+test('tiktok: depth metrics (reach, frequency, video funnel) and ad-group rows', async () => {
+  const { reportRow, adgroupRow, depthFields, DEPTH_METRICS } = await import('../api/_lib/ingest/tiktok.mjs');
+  const fx = await import('./fixtures/tiktok.mjs');
+  const opts = { accountId: fx.ADVERTISER, today: '2026-11-05', runId: 9, depth: true };
+  const row = reportRow(fx.campaignItems[0], opts);
+  assert.deepEqual(row, {
+    platform: 'tiktok', account_id: fx.ADVERTISER, campaign_id: fx.CAMPAIGN, date: '2026-11-02',
+    cost: 210.40, clicks: 610, impressions: 51200, all_conversions: 0, conversions: 0, conversions_value: null,
+    reach: 30100, frequency: 1.70, video_play_actions: 49800, video_watched_2s: 5200, video_watched_6s: 2150,
+    video_views_p25: 1800, video_views_p50: 1050, video_views_p75: 690, video_views_p100: 360,
+    engaged_view: 2400, average_video_play: 2.20,
+    is_complete: true, source: 'api', run_id: 9,
+  });
+  // Without depth the keys are absent, so an upsert leaves stored depth values alone.
+  const core = reportRow(fx.campaignItems[0], { ...opts, depth: false });
+  for (const k of DEPTH_METRICS) assert.ok(!(k in core), k);
+  // Missing / '-' depth values are NULL, not 0; counts are integers.
+  assert.deepEqual(depthFields({ reach: '-', video_play_actions: '12.0', frequency: '1.234' }).reach, null);
+  assert.equal(depthFields({ video_play_actions: '12.0' }).video_play_actions, 12);
+  assert.equal(depthFields({ frequency: '1.234' }).frequency, 1.234);
+  assert.equal(depthFields({}).engaged_view, null);
+
+  const g = adgroupRow(fx.adgroupItems[1], opts);
+  assert.equal(g.adgroup_id, fx.ADGROUP);
+  assert.equal(g.campaign_id, fx.CAMPAIGN);
+  assert.equal(g.date, '2026-11-03');
+  assert.equal(g.cost, 215.90);
+  assert.equal(g.reach, 26800);
+  assert.equal(adgroupRow({ dimensions: { stat_time_day: '2026-11-03 00:00:00' }, metrics: {} }, opts), null);
+  assert.equal(adgroupRow({ dimensions: { adgroup_id: '1', stat_time_day: '2026-11-05 00:00:00' }, metrics: { campaign_id: '-' } }, opts).campaign_id, null);
+});
+
+test('tiktok: pixel event breakdown is inert until configured', async () => {
+  const { eventSpecs, eventRows, eventActions, reportMetrics, DEPTH_METRICS } = await import('../api/_lib/ingest/tiktok.mjs');
+  assert.deepEqual(eventSpecs(undefined), []);
+  assert.deepEqual(eventSpecs({}), []);
+  assert.deepEqual(reportMetrics(['spend'], { depth: false, events: eventSpecs({}) }), ['spend']);
+  assert.deepEqual(reportMetrics(['spend'], { depth: true }), ['spend', ...DEPTH_METRICS]);
+
+  const events = eventSpecs({ tiktok_events: [
+    'complete_payment',
+    { metric: 'form', name: 'Coupon Lead', category: 'LEAD' },
+    { metric: 'complete_payment' }, // duplicate
+    { metric: 'spend; drop' }, { metric: 'Bad' }, null, // not metric identifiers
+    { metric: 'on_web_order', value_metric: 'total_on_web_order_value' },
+  ] });
+  assert.deepEqual(events.map((e) => [e.metric, e.name, e.category, e.value_metric]), [
+    ['complete_payment', 'complete_payment', 'TIKTOK_EVENT', null],
+    ['form', 'Coupon Lead', 'LEAD', null],
+    ['on_web_order', 'on_web_order', 'TIKTOK_EVENT', 'total_on_web_order_value'],
+  ]);
+  assert.deepEqual(reportMetrics(['spend'], { depth: false, events }), ['spend', 'complete_payment', 'form', 'on_web_order', 'total_on_web_order_value']);
+
+  const acts = eventActions(events, '7012');
+  assert.deepEqual(acts[1], { platform: 'tiktok', account_id: '7012', action_id: 'event:form', name: 'Coupon Lead', category: 'LEAD',
+    type: 'TIKTOK_REPORT_METRIC', status: 'ENABLED', include_in_conversions: null, primary_for_goal: null });
+
+  const item = { dimensions: { campaign_id: '18', stat_time_day: '2026-11-03 00:00:00' },
+    metrics: { complete_payment: '0', form: '4', on_web_order: '0', total_on_web_order_value: '25.50' } };
+  assert.deepEqual(eventRows(item, events, { accountId: '7012', runId: 2 }), [
+    { platform: 'tiktok', account_id: '7012', campaign_id: '18', date: '2026-11-03', action_id: 'event:form', action_name: 'Coupon Lead', category: 'LEAD', all_conversions: 4, conversions: 4, value: null, run_id: 2 },
+    { platform: 'tiktok', account_id: '7012', campaign_id: '18', date: '2026-11-03', action_id: 'event:on_web_order', action_name: 'on_web_order', category: 'TIKTOK_EVENT', all_conversions: 0, conversions: 0, value: 25.5, run_id: 2 },
+  ], 'zero-count, zero-value events write no row');
+});
+
+test('tiktok: ingest writes campaign + ad-group depth, read-only GETs only', async () => {
+  const { ingestTikTok, DEPTH_METRICS } = await import('../api/_lib/ingest/tiktok.mjs');
+  const fx = await import('./fixtures/tiktok.mjs');
+  const { fetch, calls } = fx.fakeTikTokFetch();
+  const real = globalThis.fetch;
+  const seen = [];
+  globalThis.fetch = (url, init = {}) => { seen.push(init.method || 'GET'); return fetch(url, init); };
+  try {
+    const { q, upserts } = fx.recordingClient();
+    const out = await ingestTikTok(q, { account_id: fx.ADVERTISER, timezone: 'America/New_York', config: {} }, '2026-11-02', '2026-11-03', { token: 't', runId: 5 });
+    assert.deepEqual(out, { rows: 2, campaigns: 1, adgroup_rows: 2, adgroups: 1, conversions: 0 });
+    assert.deepEqual([...new Set(seen)], ['GET']);
+    const ad = upserts('ad_daily');
+    assert.equal(ad.length, 2);
+    assert.equal(ad[0].reach, 30100);
+    assert.equal(ad[1].video_views_p100, 400);
+    const ag = upserts('adgroup_daily');
+    assert.deepEqual(ag.map((r) => [r.adgroup_id, r.campaign_id, r.date, r.cost, r.engaged_view]), [
+      [fx.ADGROUP, fx.CAMPAIGN, '2026-11-02', 210.40, 2400], [fx.ADGROUP, fx.CAMPAIGN, '2026-11-03', 215.90, 2460]]);
+    const groups = upserts('adgroups');
+    // listing upsert (status, budget) then the report sighting, which carries no status
+    // column at all, so the stored status is never blanked by it.
+    assert.deepEqual(groups.map((g) => [g.name, g.status, g.first_seen, g.last_seen]),
+      [['Ad Group 1', 'ENABLE', '2026-10-20', groups[0].last_seen], ['Ad Group 1', undefined, '2026-11-02', '2026-11-03']]);
+    assert.equal(upserts('conversions_daily').length, 0, 'no events configured → no breakdown');
+    assert.equal(upserts('conversion_actions').length, 0);
+    const reports = calls.filter((c) => c.path === '/report/integrated/get/');
+    assert.deepEqual(reports.map((c) => c.level), ['AUCTION_CAMPAIGN', 'AUCTION_ADGROUP']);
+    for (const c of reports) for (const m of DEPTH_METRICS) assert.ok(c.metrics.includes(m), `${c.level} asks for ${m}`);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test('tiktok: a refused depth metric falls back to core; ad-group failure is not fatal', async () => {
+  const { ingestTikTok, DEPTH_METRICS } = await import('../api/_lib/ingest/tiktok.mjs');
+  const fx = await import('./fixtures/tiktok.mjs');
+  const real = globalThis.fetch;
+  try {
+    // 1. TikTok refuses 'engaged_view': spend still lands, depth columns are left out.
+    let fake = fx.fakeTikTokFetch({ reject: 'engaged_view' });
+    globalThis.fetch = fake.fetch;
+    let rec = fx.recordingClient();
+    let out = await ingestTikTok(rec.q, { account_id: fx.ADVERTISER }, '2026-11-02', '2026-11-03', { token: 't' });
+    assert.equal(out.rows, 2);
+    assert.match(out.depth_error, /Invalid metric: engaged_view/);
+    assert.match(out.adgroup_depth_error, /Invalid metric: engaged_view/);
+    const ad = rec.upserts('ad_daily');
+    assert.equal(ad[0].cost, 210.40);
+    for (const k of DEPTH_METRICS) assert.ok(!(k in ad[0]), `${k} not written`);
+    // the insert's column list carries no depth column, so stored values survive
+    const ins = rec.statements.find((s) => s.text.startsWith('insert into ads.ad_daily'));
+    assert.ok(!/reach/.test(ins.text));
+    assert.equal(rec.upserts('adgroup_daily').length, 2, 'ad groups fall back to core too');
+
+    // 2. 40-day window = two report chunks: after the first falls back, the second asks for core only.
+    fake = fx.fakeTikTokFetch({ reject: 'reach' });
+    globalThis.fetch = fake.fetch;
+    await ingestTikTok(fx.recordingClient().q, { account_id: fx.ADVERTISER }, '2026-09-25', '2026-11-03', { token: 't', snapshots: false });
+    const camp = fake.calls.filter((c) => c.level === 'AUCTION_CAMPAIGN').map((c) => c.metrics.includes('reach'));
+    assert.deepEqual(camp, [true, false, false], 'chunk 1 full → refused → core; chunk 2 core only');
+
+    // 3. Ad-group report broken: campaign rows still written, error recorded, no throw.
+    fake = fx.fakeTikTokFetch({ failAdgroup: true });
+    globalThis.fetch = fake.fetch;
+    rec = fx.recordingClient();
+    out = await ingestTikTok(rec.q, { account_id: fx.ADVERTISER }, '2026-11-02', '2026-11-03', { token: 't' });
+    assert.equal(out.rows, 2);
+    assert.equal(out.adgroup_rows, 0);
+    assert.match(out.adgroup_error, /adgroup report broke/);
+    assert.equal(rec.upserts('ad_daily')[0].reach, 30100);
+  } finally {
+    globalThis.fetch = real;
+  }
+});
+
+test('tiktok: configured pixel events become conversion actions + campaign-day rows', async () => {
+  const { ingestTikTok } = await import('../api/_lib/ingest/tiktok.mjs');
+  const fx = await import('./fixtures/tiktok.mjs');
+  const real = globalThis.fetch;
+  const fake = fx.fakeTikTokFetch();
+  // The fixture has no 'form' values; give day 2 four leads.
+  globalThis.fetch = async (url, init) => {
+    const r = await fake.fetch(url, init);
+    const j = await r.json();
+    for (const it of (j.data && j.data.list) || []) if (it.metrics && 'form' in it.metrics) it.metrics.form = it.dimensions.stat_time_day.startsWith('2026-11-03') ? '4' : '0';
+    return { ...r, json: async () => j };
+  };
+  try {
+    const rec = fx.recordingClient();
+    const out = await ingestTikTok(rec.q, { account_id: fx.ADVERTISER, config: { tiktok_events: [{ metric: 'form', name: 'Coupon Lead', category: 'LEAD' }] } },
+      '2026-11-02', '2026-11-03', { token: 't' });
+    assert.equal(out.conversions, 1);
+    assert.deepEqual(rec.upserts('conversion_actions').map((a) => [a.action_id, a.name]), [['event:form', 'Coupon Lead']]);
+    const cv = rec.upserts('conversions_daily');
+    assert.deepEqual(cv.map((r) => [r.campaign_id, r.date, r.action_id, r.all_conversions]), [[fx.CAMPAIGN, '2026-11-03', 'event:form', 4]]);
+    assert.ok(fake.calls.find((c) => c.level === 'AUCTION_CAMPAIGN').metrics.includes('form'));
+    assert.ok(!fake.calls.find((c) => c.level === 'AUCTION_ADGROUP').metrics.includes('form'), 'events stay campaign-grain');
+  } finally {
+    globalThis.fetch = real;
+  }
+});
