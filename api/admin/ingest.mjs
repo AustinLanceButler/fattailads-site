@@ -4,7 +4,7 @@
 //   probe            → what the stored credentials can see (Google MCC clients, Meta
 //                      ad accounts, TikTok advertisers, Microsoft campaigns per configured account) + env flags
 //   seed             → { seed: {...} } upsert clients / ad_accounts / sheet_feeds / stores /
-//                      market_aliases / campaign_name_rules / conversion_labels (see db/seed.example.json)
+//                      market_aliases / market_rollups / campaign_name_rules / conversion_labels (see db/seed.example.json)
 //   run              → { platform, account_id?, from?, to?, snapshots? } one ingest pass
 //   push_sheets      → { feed_id?, dry_run? }
 //   archive_funnel   → { spreadsheet_id, tab, preset, source_tag?, account_id?, source_accounts? }

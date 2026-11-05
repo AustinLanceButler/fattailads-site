@@ -17,6 +17,11 @@
 // source 'media_daily' reads ads.v_media_daily instead, one row per date × channel ×
 // market × tactic (columns: date, platform, account_id, channel, market, tactic,
 // spend, impressions, clicks, conversions, store_visits) — for dashboards.
+// source 'campaign_dims' reads ads.v_campaign_dims_daily: every v_feed_daily column
+// plus platform_label (Google / Bing / Facebook / TikTok), channel, tactic ('-' when
+// none), market, pacing_market (ads.market_rollups), store_number (roster form, e.g.
+// '0391') and dims_source (roster / rule / override / unmapped / unmapped store).
+// Unclassified spend shows as '(unmapped)' so a sheet can flag it instead of losing it.
 
 import { exec, listFeeds } from './warehouse.mjs';
 import { todayIn, windowStart, sheetSerial, addDays, ymd, ET } from './dates.mjs';
@@ -56,6 +61,11 @@ export async function queryFeedRows(q, feed, today) {
     for (const r of rows) r.date = ymd(r.date);
     return { rows, from };
   }
+  if (feed.source === 'campaign_dims') {
+    const rows = await exec(q, `select * from ads.v_campaign_dims_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, campaign, campaign_id`, p);
+    for (const r of rows) r.date = ymd(r.date);
+    return { rows, from };
+  }
   const rows = await exec(q, `select * from ads.v_feed_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, campaign, campaign_id`, p);
   const archive = (feed.archive_sources || []).filter(Boolean);
   if (archive.length) {
@@ -69,6 +79,8 @@ export async function queryFeedRows(q, feed, today) {
 }
 
 const DATE_COLS = new Set(['date', 'as_of']);
+// Digit-only strings in these columns stay text (ids; store numbers keep their zeros).
+const TEXT_COLS = new Set(['campaign_id', 'account_id', 'budget_id', 'budget_key', 'data_source', 'campaign', 'store_number']);
 
 export function projectRow(row, columns) {
   return columns.map((c) => {
@@ -83,7 +95,7 @@ export function projectRow(row, columns) {
     if (v === undefined || v === null) return '';
     if (DATE_COLS.has(c)) return sheetSerial(ymd(v));
     if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
-    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v) && !['campaign_id', 'account_id', 'budget_id', 'budget_key', 'data_source', 'campaign'].includes(c)) return Number(v);
+    if (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v) && !TEXT_COLS.has(c)) return Number(v);
     return v;
   });
 }
