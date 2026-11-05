@@ -28,7 +28,8 @@ async function run(client) {
   const { raiseAlert, clearAlert } = await import('../api/_lib/alerts.mjs');
   W.useClient(() => q);
   const db = await W.wh();
-  assert.equal((await q.query('select count(*)::int as n from ads.schema_migrations'))[0].n, 1);
+  const { MIGRATIONS } = await import('../db/migrations/index.mjs');
+  assert.equal((await q.query('select count(*)::int as n from ads.schema_migrations'))[0].n, MIGRATIONS.length);
   await W.wh(); // idempotent second call
 
   // seed
@@ -153,6 +154,50 @@ async function run(client) {
   ]);
   const rec = await q.query(`select date::text, presence, diff::float8 as diff from ads.v_reconcile_funnel order by date`);
   assert.deepEqual(rec, [{ date: '2026-10-03', presence: 'both', diff: 0.31 }, { date: '2026-10-03', presence: 'api_only', diff: 10.5 }]);
+
+  // campaign_dims feed (0005): store-number markets, leading zeros, roll-ups, unmapped spend
+  await W.applySeed(db, {
+    stores: [
+      { client_id: 'acme', store_number: '0391', market: 'Miami Dade' },
+      { client_id: 'acme', store_number: '1254', market: 'Palm Beach North' },
+    ],
+    market_rollups: [{ client_id: 'acme', market: 'Palm Beach North', pacing_market: 'Palm Beach' }],
+    campaign_name_rules: [
+      { client_id: 'acme', priority: 10, channel: 'Search', tactic: 'Brand', store_group: 1,
+        pattern: '^Brand[[:space:]\\u00a0]+-.*[[:space:]\\u00a0]-[[:space:]\\u00a0]+([0-9]{2,4})(?:[[:space:]\\u00a0]+-|[[:space:]\\u00a0]*$)' },
+      { client_id: 'acme', platform: 'google', priority: 20, channel: 'PMax', tactic: '-', market_group: 1, pattern: '^PMax - .* - (Dade|Broward)$' },
+    ],
+  });
+  await W.syncCampaigns(db, 'google', '1111111111', [
+    { campaign_id: 'd1', name: 'Brand - Dade - 391 - Maximize Store Visits', status: 'ENABLED', channel_type: 'SEARCH', first_seen: today, last_seen: today },
+    { campaign_id: 'd2', name: 'Brand - Palm Beach North - 1254 -  Maximize Store Visits', status: 'ENABLED', channel_type: 'SEARCH', first_seen: today, last_seen: today },
+    { campaign_id: 'd3', name: 'Brand - South Carolina - 3342', status: 'ENABLED', channel_type: 'SEARCH', first_seen: today, last_seen: today },
+    { campaign_id: 'd4', name: 'Demand Gen - Test', status: 'ENABLED', channel_type: 'DEMAND_GEN', first_seen: today, last_seen: today },
+  ], today);
+  await W.upsert(db, 'ad_daily', ['d1', 'd2', 'd3', 'd4'].map((c, i) => (
+    { platform: 'google', account_id: '1111111111', campaign_id: c, date: '2026-10-03', cost: i + 1, clicks: 1, impressions: 1, is_complete: true, source: 'api' })));
+  const ddims = await q.query(`select campaign_id, market, store_number, store_on_roster from ads.campaign_dims where campaign_id like 'd%' order by campaign_id`);
+  assert.deepEqual(ddims, [
+    { campaign_id: 'd1', market: 'Miami Dade', store_number: '0391', store_on_roster: true },
+    { campaign_id: 'd2', market: 'Palm Beach North', store_number: '1254', store_on_roster: true },
+    { campaign_id: 'd3', market: null, store_number: '3342', store_on_roster: false },
+    { campaign_id: 'd4', market: null, store_number: null, store_on_roster: false },
+  ]);
+  const cfeed = { feed_id: 0, spreadsheet_id: 'SHEET', tab: 'Media Daily (SB)', source: 'campaign_dims', window_rule: 'from:2026-10-03', min_rows: 1,
+    accounts: [{ platform: 'google', account_id: '1111111111' }],
+    columns: ['date', 'platform_label', 'channel', 'tactic', 'pacing_market', 'market', 'store_number', 'campaign', 'cost', 'campaign_id', 'dims_source'] };
+  const { rows: crows } = await queryFeedRows(db, cfeed, '2026-10-04');
+  const byId = Object.fromEntries(crows.map((r) => [r.campaign_id, projectRow(r, cfeed.columns).slice(1)]));
+  assert.deepEqual(byId.d1, ['Google', 'Search', 'Brand', 'Miami Dade', 'Miami Dade', '0391', 'Brand - Dade - 391 - Maximize Store Visits', 1, 'd1', 'roster']);
+  assert.deepEqual(byId.d2, ['Google', 'Search', 'Brand', 'Palm Beach', 'Palm Beach North', '1254', 'Brand - Palm Beach North - 1254 -  Maximize Store Visits', 2, 'd2', 'roster']);
+  assert.deepEqual(byId.d3, ['Google', 'Search', 'Brand', '(unmapped store)', '(unmapped store)', '3342', 'Brand - South Carolina - 3342', 3, 'd3', 'unmapped store']);
+  assert.deepEqual(byId.d4, ['Google', '(unmapped)', '-', '(unmapped)', '(unmapped)', '', 'Demand Gen - Test', 4, 'd4', 'unmapped']);
+  assert.equal(byId.c2[1], 'PMax', 'market-level rule: market from the name token');
+  assert.equal(byId.c2[3], 'Broward');
+  assert.equal(byId.c2[9], 'rule');
+  // every row of the window is present, mapped or not
+  const total = Number((await q.query(`select sum(cost) s from ads.v_feed_daily where date = '2026-10-03' and account_id = '1111111111'`))[0].s);
+  assert.equal(crows.filter((r) => r.date === '2026-10-03').reduce((s, r) => s + Number(r.cost), 0).toFixed(2), total.toFixed(2));
 
   // runs + health + alerts (no ClickUp env → DB rows only)
   const runId = await W.startRun(db, { job: 'google', platform: 'google', account_id: '1111111111', window_from: '2026-08-30', window_to: today });

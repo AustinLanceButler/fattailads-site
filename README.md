@@ -87,5 +87,10 @@ Bring-up: `probe` (what the stored tokens can see) → `seed` with a filled-in c
 `db/seed.example.json` → `scripts/backfill.sh` per account → `archive_funnel` per Funnel tab
 → `push_sheets` with `dry_run: true` → parallel-run into `(SB)` tabs → repoint `sheet_feeds.tab`.
 
+Pacing sheets that need exact market / tactic / store columns read a `campaign_dims` feed
+(`ads.v_campaign_dims_daily`, migration 0005): campaign-per-day rows with the dimensions from
+`ads.campaign_dims` (store roster first, then the name rules), a `pacing_market` roll-up from
+`ads.market_rollups`, and `(unmapped)` values for anything the rules don't classify.
+
 Tests: `npm test` (pure functions). The end-to-end check needs a Postgres:
 `PG_TEST_URL=postgres:///postgres node --test test/integration.test.mjs`.

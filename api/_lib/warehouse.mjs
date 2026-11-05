@@ -204,7 +204,7 @@ export async function listFeeds(q, { feed_id = null, includeDisabled = false } =
   return exec(q, `select * from ads.sheet_feeds where ($1::int is null or feed_id = $1) and ($2::boolean or enabled) order by feed_id`, [feed_id, includeDisabled]);
 }
 
-// Admin-driven seeding: clients, ad_accounts, sheet_feeds, stores, rules, aliases,
+// Admin-driven seeding: clients, ad_accounts, sheet_feeds, stores, rules, aliases, market roll-ups,
 // conversion-action labels. Each list is upserted by its natural key. Account IDs
 // and client config stay in the database, never in this (public) repo.
 export async function applySeed(q, seed) {
@@ -246,6 +246,11 @@ export async function applySeed(q, seed) {
     await exec(q, `insert into ads.market_aliases (client_id, alias, market) values ($1, $2, $3) on conflict (client_id, alias) do update set market = excluded.market`, [m.client_id, m.alias, m.market]);
   }
   out.market_aliases = (seed.market_aliases || []).length;
+  for (const m of seed.market_rollups || []) {
+    await exec(q, `insert into ads.market_rollups (client_id, market, pacing_market) values ($1, $2, $3)
+      on conflict (client_id, market) do update set pacing_market = excluded.pacing_market`, [m.client_id, m.market, m.pacing_market]);
+  }
+  out.market_rollups = (seed.market_rollups || []).length;
   if (seed.campaign_name_rules) {
     // Rules are replaced per client so priorities stay coherent.
     const clients = [...new Set(seed.campaign_name_rules.map((r) => r.client_id))];

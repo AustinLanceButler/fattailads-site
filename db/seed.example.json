@@ -7,6 +7,8 @@
     "feed_source_tag becomes the Funnel-style data_source prefix (adwords: / bing: / facebook: / linkedin_api: / tiktok:).",
     "sheet_feeds.columns picks columns from ads.v_feed_daily in tab order; 'conv:<label>' pulls a labelled conversion action; window_rule 'budgets_current' switches to ads.v_budget_pools_current.",
     "sheet_feeds.source 'media_daily' reads ads.v_media_daily (date × channel × market × tactic, dims from campaign_name_rules) instead of the campaign-per-day feed — for dashboards.",
+    "sheet_feeds.source 'campaign_dims' reads ads.v_campaign_dims_daily: one row per campaign per day with platform_label, channel, tactic, market, pacing_market, store_number and dims_source, so a pacing sheet can SUMIFS exact columns. Market comes from the store roster when the rule captures a store (store_group) and no market_group; leading zeros are ignored ('391' = '0391'). Unclassified rows read '(unmapped)'.",
+    "market_rollups map a media market to the market a pacing sheet reports (e.g. Palm Beach North → Palm Beach); pacing_market falls back to market.",
     "campaign_name_rules.pattern is a Postgres regex: word boundary is \\y, not \\b (\\b is a backspace there)."
   ],
   "clients": [
@@ -62,6 +64,10 @@
       "header": ["date", "platform", "channel", "market", "tactic", "spend", "impressions", "clicks", "conversions", "store_visits"],
       "window_rule": "from:2025-01-01", "min_rows": 500
     }
+  ],
+  "market_rollups": [
+    { "client_id": "acme", "market": "Palm Beach North", "pacing_market": "Palm Beach" },
+    { "client_id": "acme", "market": "Palm Beach South", "pacing_market": "Palm Beach" }
   ],
   "stores": [
     { "client_id": "acme", "store_number": "0804", "market": "Broward", "city": "Fort Lauderdale", "state": "FL" }
