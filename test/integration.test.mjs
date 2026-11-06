@@ -2,7 +2,7 @@
 //   PG_TEST_URL=postgres://user@localhost:5432/postgres node --test test/integration.test.mjs
 // Exercises the migration, seed, campaign sync + rename history, fact upserts, the
 // sheet-contract projection, budget pools, reconciliation and health, end to end.
-import { test } from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 
 const url = process.env.PG_TEST_URL;
@@ -202,7 +202,15 @@ async function run(client) {
   // runs + health + alerts (no ClickUp env → DB rows only)
   const runId = await W.startRun(db, { job: 'google', platform: 'google', account_id: '1111111111', window_from: '2026-08-30', window_to: today });
   await W.finishRun(db, runId, { status: 'ok', rows: 4, detail: { ms: 1 } });
-  const health = await checkHealth(db, { notify: false });
+  // checkHealth judges staleness against the wall clock; pin it to the fixture's
+  // day so the test doesn't start failing once the fixed dates fall behind.
+  mock.timers.enable({ apis: ['Date'], now: Date.parse(`${today}T16:00:00Z`) });
+  let health;
+  try {
+    health = await checkHealth(db, { notify: false });
+  } finally {
+    mock.timers.reset();
+  }
   assert.equal(health.accounts.find((a) => a.platform === 'google').ok, true);
   assert.equal(health.accounts.find((a) => a.platform === 'microsoft').ok, false, 'no runs/rows for microsoft');
   const a1 = await raiseAlert(db, { job: 't', dedupe_key: 'k', message: 'first' });
