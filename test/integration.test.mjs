@@ -100,7 +100,9 @@ async function run(client) {
   // sheet contract (today = 2026-10-04 → the partial 10-04 row must be excluded)
   const feeds = await W.listFeeds(db);
   const google = feeds.find((f) => f.tab.startsWith('Google'));
-  const { rows } = await queryFeedRows(db, google, today);
+  // Feeds read only the view columns their spec names; add the label columns to see them.
+  const convCols = ['conv:Get a Quick Quote', 'conv:First Time Phone Call', 'conv_total'];
+  const { rows } = await queryFeedRows(db, { ...google, columns: [...google.columns, ...convCols] }, today);
   assert.deepEqual(rows.map((r) => [r.date, r.campaign, Number(r.cost)]), [
     ['2026-10-02', 'Brand - Dade - 0804 - Maximize Store Visits', 73.13],
     ['2026-10-03', 'Brand - Dade - 0804 - Maximize Store Visits', 2.31],
@@ -114,6 +116,14 @@ async function run(client) {
   assert.equal(Number(r1003.labeled_conv_total), 5);
   const projected = projectRow(r1003, google.columns);
   assert.deepEqual(projected, [46298, 'Brand - Dade - 0804 - Maximize Store Visits', 2.31, 2, 6, 1, 7.33, 0.5, 'USD401.15/day']);
+  assert.deepEqual(projectRow(r1003, convCols), [2, 3, 5]);
+  // The narrow read (spec columns + date only) projects to the same cells as the wide one.
+  const { rows: lean } = await queryFeedRows(db, google, today);
+  assert.deepEqual(Object.keys(lean[0]).sort(), [...google.columns].sort());
+  assert.deepEqual(lean.map((r) => projectRow(r, google.columns)), rows.map((r) => projectRow(r, google.columns)));
+  // A spec column the view doesn't have still projects to a blank cell.
+  const { rows: odd } = await queryFeedRows(db, { ...google, columns: ['date', 'no_such_column', 'blank', 'cost'] }, today);
+  assert.deepEqual(projectRow(odd[0], ['date', 'no_such_column', 'blank', 'cost']), [46297, '', '', 73.13]);
   const dry = await pushFeed(db, google, { today, dryRun: true });
   assert.equal(dry.status, 'dry_run');
   assert.equal(dry.rows, 3);
@@ -308,7 +318,7 @@ async function runTikTok(client) {
   const { rows } = await queryFeedRows(db, feed, '2026-11-04');
   assert.deepEqual(projectRow(rows[0], feed.columns).slice(1), ['Launch Campaign', 300, 700, 50000, '', '', '', '', '', '', '', '', ''], 'pre-0006 row: depth blank, not 0');
   assert.deepEqual(projectRow(rows[1], feed.columns).slice(1), ['Launch Campaign', 210.40, 610, 51200, 30100, 1.70, 49800, 1800, 1050, 690, 360, 2400, 2.20]);
-  const { rows: drows } = await queryFeedRows(db, { ...feed, source: 'campaign_dims' }, '2026-11-04');
+  const { rows: drows } = await queryFeedRows(db, { ...feed, source: 'campaign_dims', columns: [...feed.columns, 'platform_label', 'channel', 'pacing_market', 'dims_source'] }, '2026-11-04');
   assert.deepEqual(projectRow(drows[2], ['platform_label', 'channel', 'pacing_market', 'reach', 'engaged_view', 'dims_source']), ['TikTok', 'TikTok', 'All Markets', 26800, 2460, 'rule']);
   const [cd] = await q.query(`select reach, channel from ads.v_campaign_daily where platform = 'tiktok' and date = '2026-11-03'`);
   assert.deepEqual(cd, { reach: '26800', channel: 'TikTok' });
