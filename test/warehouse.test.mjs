@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { addDays, monthStartMinus, monthChunks, sheetSerial, windowStart, todayIn, isYmd } from '../api/_lib/dates.mjs';
 import { parseCsv, num } from '../api/_lib/ingest/http.mjs';
 import { parseReportCsv, toYmd, REPORT_COLUMNS, mergeCampaignDays, downloadReport } from '../api/_lib/ingest/microsoft-ads.mjs';
-import { projectRow } from '../api/_lib/feeds.mjs';
+import { projectRow, feedSelectList } from '../api/_lib/feeds.mjs';
 import { clearBelowRange, colLetter, gridShortfall, normalizeSaKey, saKeyShape, tabWidth } from '../api/_lib/sheets.mjs';
 import crypto from 'node:crypto';
 import { MIGRATIONS } from '../db/migrations/index.mjs';
@@ -459,4 +459,15 @@ test('tiktok: configured pixel events become conversion actions + campaign-day r
   } finally {
     globalThis.fetch = real;
   }
+});
+
+test('feeds: select list reads only the view columns the spec needs', () => {
+  const view = ['platform', 'account_id', 'date', 'campaign', 'cost', 'clicks', 'conv_by_label', 'labeled_conv_total', 'reach'];
+  assert.equal(feedSelectList(['date', 'campaign', 'cost'], view), '"date", "campaign", "cost"');
+  // conv:<label> and conv_total read the label columns once; blank and unknown columns read nothing.
+  assert.equal(feedSelectList(['cost', 'conv:A', 'conv:B', 'conv_total', 'blank', 'no_such_column'], view),
+    '"date", "cost", "conv_by_label", "labeled_conv_total"');
+  // date is always read (the max-date guard needs it); extras such as the archive sort key are added.
+  assert.equal(feedSelectList(['clicks'], view, ['campaign']), '"date", "campaign", "clicks"');
+  assert.equal(feedSelectList([], []), '');
 });

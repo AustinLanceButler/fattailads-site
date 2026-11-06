@@ -46,6 +46,36 @@ function accountFilter(accounts) {
   return { where: parts.length ? `(${parts.join(' or ')})` : 'false', params };
 }
 
+// The view columns a feed's column spec reads, in SQL form. Only columns that exist in
+// the view are selected, so a spec naming a missing column still projects to a blank
+// cell (as it did under `select *`). `date` is always read: pushFeed needs it for the
+// max-date guard.
+//
+// Why not `select *`: the views carry ~45 columns and every feed uses a handful.
+// Neon's Free plan caps network transfer at 5 GB a month (then suspends the compute),
+// and on 11/6/26 the push-sheets reads were ~all of it: ~21 MB a run for the three
+// live feeds under `select *` (estimated), ~9 MB with only the columns they write.
+export function feedSelectList(columns, available, extra = []) {
+  const have = new Set(available);
+  const want = new Set(['date', ...extra]);
+  for (const c of columns || []) {
+    if (c === 'blank') continue;
+    if (c === 'conv_total') want.add('labeled_conv_total');
+    else if (c.startsWith('conv:')) want.add('conv_by_label');
+    else want.add(c);
+  }
+  return [...want].filter((c) => have.has(c)).map((c) => `"${c.replace(/"/g, '""')}"`).join(', ');
+}
+
+async function viewColumns(q, view) {
+  const rows = await exec(q, `select column_name from information_schema.columns where table_schema = 'ads' and table_name = $1`, [view]);
+  return rows.map((r) => r.column_name);
+}
+
+async function selectList(q, feed, view, extra = []) {
+  return feedSelectList(feed.columns, await viewColumns(q, view), extra) || '*';
+}
+
 export async function queryFeedRows(q, feed, today) {
   const accounts = feedAccounts(feed);
   const { where, params } = accountFilter(accounts);
@@ -57,17 +87,21 @@ export async function queryFeedRows(q, feed, today) {
   const from = windowStart(feed.window_rule, today);
   const p = [...params, from, today];
   if (feed.source === 'media_daily') {
-    const rows = await exec(q, `select * from ads.v_media_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, channel, market, tactic`, p);
+    const cols = await selectList(q, feed, 'v_media_daily');
+    const rows = await exec(q, `select ${cols} from ads.v_media_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, channel, market, tactic`, p);
     for (const r of rows) r.date = ymd(r.date);
     return { rows, from };
   }
   if (feed.source === 'campaign_dims') {
-    const rows = await exec(q, `select * from ads.v_campaign_dims_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, campaign, campaign_id`, p);
+    const cols = await selectList(q, feed, 'v_campaign_dims_daily');
+    const rows = await exec(q, `select ${cols} from ads.v_campaign_dims_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, platform, campaign, campaign_id`, p);
     for (const r of rows) r.date = ymd(r.date);
     return { rows, from };
   }
-  const rows = await exec(q, `select * from ads.v_feed_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, campaign, campaign_id`, p);
   const archive = (feed.archive_sources || []).filter(Boolean);
+  // Archive rows are merged and re-sorted by date + campaign below.
+  const cols = await selectList(q, feed, 'v_feed_daily', archive.length ? ['campaign'] : []);
+  const rows = await exec(q, `select ${cols} from ads.v_feed_daily where ${where} and date >= $${p.length - 1}::date and date < $${p.length}::date order by date, campaign, campaign_id`, p);
   if (archive.length) {
     const likes = archive.map((s, i) => `data_source like $${i + 1} || ':%'`).join(' or ');
     const arows = await exec(q, `select * from ads.funnel_archive where (${likes}) and date >= $${archive.length + 1}::date and date < $${archive.length + 2}::date order by date, campaign`, [...archive, from, today]);
