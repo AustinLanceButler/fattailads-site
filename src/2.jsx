@@ -146,7 +146,7 @@ function Footer({ onNavigate }) {
         <div>
           <Eyebrow>Contact</Eyebrow>
           <div style={{ marginTop: 12, fontFamily: 'JetBrains Mono', fontSize: 12, lineHeight: 1.8, color: 'var(--ink-1)' }}>
-            Use the contact form<br/><a href="tel:+19542285080" onClick={() => { window.dataLayer && window.dataLayer.push({ event: 'phone_call', link_location: 'footer' }); }} style={{ color: 'inherit', textDecoration: 'none' }}>(954)&nbsp;228-5080</a>
+            Use the contact form<br/><a href="tel:+16283061328" onClick={() => { window.dataLayer && window.dataLayer.push({ event: 'phone_call', link_location: 'footer' }); }} style={{ color: 'inherit', textDecoration: 'none' }}>(628)&nbsp;306-1328</a>
           </div>
         </div>
         <div>

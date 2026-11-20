@@ -220,7 +220,7 @@ function ContactPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontSize: 14 }}>
             <div>
               <Eyebrow>Phone</Eyebrow>
-              <div style={{ marginTop: 6, fontFamily: 'JetBrains Mono', fontSize: 16, color: 'var(--ink-0)', fontWeight: 500 }}><a href="tel:+19542285080" onClick={() => { window.dataLayer && window.dataLayer.push({ event: 'phone_call', link_location: 'contact_page' }); }} style={{ color: 'inherit', textDecoration: 'none' }}>(954)&nbsp;228-5080</a></div>
+              <div style={{ marginTop: 6, fontFamily: 'JetBrains Mono', fontSize: 16, color: 'var(--ink-0)', fontWeight: 500 }}><a href="tel:+16283061328" onClick={() => { window.dataLayer && window.dataLayer.push({ event: 'phone_call', link_location: 'contact_page' }); }} style={{ color: 'inherit', textDecoration: 'none' }}>(628)&nbsp;306-1328</a></div>
             </div>
             <div>
               <Eyebrow>Office</Eyebrow>
@@ -253,7 +253,7 @@ function ContactPage() {
             <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16 }}>
               <Field label="Your name"        name="name"        required placeholder="First and last"/>
               <Field label="Work email"       name="email"       type="email" required placeholder="you@company.com"/>
-              <Field label="Phone"            name="phone"       type="tel" placeholder="(954) 228-5080"/>
+              <Field label="Phone"            name="phone"       type="tel" placeholder="(628) 306-1328"/>
               <Field label="Company"          name="company"     placeholder="Company name" />
             </div>
             <div style={{ marginTop: 16 }}>
