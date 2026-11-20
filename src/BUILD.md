@@ -42,6 +42,6 @@ output of the commit — nothing else.
 - Approach-page bio Miami → Fort Lauderdale
 - Mobile responsive pass: useMobile() hook, two-row wrap nav, clamp() type and
   padding, auto-fit grids, mobile work/article rows, table scroll wrappers
-- tel:+19542285080 links + conversion dataLayer pushes
+- tel:+16283061328 links + conversion dataLayer pushes
 - privacy@fattail.ads → privacy@fattailads.com (mailto:)
 - index.html: viewport/title/meta description, GTM head+noscript, consent bridge
