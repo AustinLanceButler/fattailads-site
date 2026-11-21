@@ -12,8 +12,8 @@ never committed.
 |---|---|---|
 | `/` | `index.html` + `src/*.jsx` | Homepage SPA |
 | `/meet` | `meet.html` | Booking page (Google Calendar embed), `noindex` |
-| `/connect` | `connect.html` | Client access onboarding — still the Leadsie embed until the FTA Connect cutover, `noindex` |
-| `/connect/v2` | `connect-v2.html` | FTA Connect wizard, all 10 platforms (agency + guided), `noindex`, unlisted |
+| `/connect` | `connect-v2.html` | Client access onboarding (FTA Connect wizard), `noindex`. `connect.html` is the retired Leadsie embed, kept only for rollback |
+| `/connect/v2` | `connect-v2.html` | Same wizard (old link, kept so earlier `/connect/v2` links still work) |
 | `/connect/beta` | `connect-beta.html` | FTA Connect Google sign-in prototype (GA4 / GTM one-click), `noindex`, unlisted |
 | `/connect/admin` | `connect-admin.html` | FTA Connect admin dashboard + follow-up queue, `noindex`, frame-denied |
 | `/connect/about` | `connect-about.html` | Public page describing FTA Connect and its Google API use (Google branding verification home page) |
@@ -29,13 +29,14 @@ GTM container `GTM-KFF7DGR5`, with Consent Mode v2 defaults read from the
 
 ## FTA Connect (Leadsie replacement)
 
-In-house client access onboarding. A client opens `/connect/v2`, picks platforms, and
+In-house client access onboarding. A client opens `/connect`, picks platforms, and
 either types an account ID (agency platforms: FTA sends the link from its own manager
 account and verifies it) or follows guided steps and reports "I've added Fat Tail Ads"
 (the cron then checks FTA's own view where an API allows it). Requests and items live in
 Neon (`connect_requests`, `connect_items`); FTA's own platform tokens are sealed in
 `connect_fta_credentials`. `connect_completed` goes to GA4 (`source=fta_connect`) once
-every item is client-done. Leadsie stays on `/connect` until a real-client parallel run.
+every item is client-done. Leadsie was cancelled (subscription ended 2026-11-23); see
+`docs/leadsie-reference.md` for how it worked and the parity plan.
 
 | Platform | Mode | Verification |
 |---|---|---|
@@ -72,9 +73,8 @@ Environment variables (Production only; Google sign-in can't run on previews by 
 | `CONNECT_GOOGLE_ADS_MCC`, `CONNECT_META_BUSINESS_ID`, `CONNECT_LINKEDIN_URL`, `CONNECT_LINKEDIN_NAME`, `CONNECT_RECEIVING_EMAIL` | Receiving identities shown to clients |
 | `CRON_SECRET` | Bearer Vercel sends to `/api/cron/*` |
 
-Cutover (ClickUp "fta-connect: parallel-run … cut /connect over and cancel Leadsie"):
-point `build.mjs` `/connect` at the native wizard in one commit, keep
-`api/leadsie-webhook.mjs` 30 days, then delete it.
+`api/leadsie-webhook.mjs` (below) receives nothing once Leadsie's subscription ends; delete it,
+`connect.html` and `LEADSIE_WEBHOOK_SECRET` after 2026-12-23.
 
 ## API
 

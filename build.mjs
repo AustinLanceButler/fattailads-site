@@ -11,11 +11,11 @@ copyFileSync('index.html', 'dist/index.html');
 // Standalone, unlisted booking page → served at /meet (dist/meet/index.html).
 mkdirSync('dist/meet', { recursive: true });
 copyFileSync('meet.html', 'dist/meet/index.html');
-// Standalone, unlisted client-access page → served at /connect (dist/connect/index.html).
+// Unlisted client-access page → /connect serves the FTA Connect wizard (Leadsie was cancelled;
+// its subscription ended 2026-11-23). Rollback: copy connect.html (the old Leadsie embed) here.
 mkdirSync('dist/connect', { recursive: true });
-copyFileSync('connect.html', 'dist/connect/index.html');
-// Beta client-access wizard (Google sign-in for GA4/GTM) → /connect/beta. Unlisted, noindex;
-// /connect itself still embeds Leadsie until cutover.
+copyFileSync('connect-v2.html', 'dist/connect/index.html');
+// Beta client-access wizard (Google sign-in for GA4/GTM) → /connect/beta. Unlisted, noindex.
 mkdirSync('dist/connect/beta', { recursive: true });
 copyFileSync('connect-beta.html', 'dist/connect/beta/index.html');
 // Phase 1 client-access wizard (all platforms, agency + guided) → /connect/v2 (unlisted, noindex),
