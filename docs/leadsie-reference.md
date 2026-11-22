@@ -269,5 +269,5 @@ the Leadsie integration is documented in §1–§5.
    throwaway account.
 5. **Phase 2 one-click OAuth approvals** (ClickUp 86bd5waxq): a widened Google verification video
    (86bcd0ee1), Meta App Review, LinkedIn CMA.
-6. **Open decision:** keep austin@fattailads.com as the receiving identity for Google/YouTube (current
-   build), or match Leadsie's austin.lance.butler@gmail.com?
+6. **Decided 2026-11-22:** the receiving identity for Google/YouTube is **austin@fattailads.com** going
+   forward. Don't match Leadsie's gmail; clients onboarded via Leadsie keep their existing gmail grants.
