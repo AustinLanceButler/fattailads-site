@@ -161,3 +161,113 @@ not a bug.
 Until Phase 2 lands, the guided steps and auto-verify carry the same outcome. Access ends up in
 FTA's accounts and verified, but each card takes the client a minute of clicks inside the platform
 instead of one sign-in.
+
+---
+
+## 5. Leadsie agency-side settings (captured 2026-11-22, logged in)
+
+Captured read-only from app.leadsie.com while the plan was still active. Screenshots `10-…` to `21-…`
+are in `docs/leadsie-reference/`.
+
+**Account**
+- Login: Facebook "Austin Lance Butler" + Google austin.lance.butler@gmail.com.
+- Joined 2026-07-16; subscription started 2026-09-23.
+- Plan & Billing: "Agency Plan will be cancelled November 23, 2026"; current period Oct 23 – Nov 23.
+- Credits: 10 full-access connections/month + 50 view-access, rolling over.
+- **Lifetime usage: 1 full-access connection** (Riffle CM). No custom links were ever created.
+- Team: one member, austin.lance.butler@gmail.com (Manager).
+
+**Main link** (`/connect/fattailads/manage`; custom links would be `/connect/to/fattailads/LINK-NAME`).
+Every integration was ON:
+
+| Integration | Requested assets | Receiving account | Access level (the "manage users" upgrade was OFF everywhere) |
+|---|---|---|---|
+| Meta | Ad Account, Page (all permissions), Catalog, Dataset (**full Dataset access ON**), Instagram (full Instagram access OFF) | Business Portfolio Fat Tail Ads (1874940222979161); **auto-assign team: Austin Lance Butler** | Partner, "Manage" |
+| Google Ads | Ads Account | **MCC Fat Tail Ads - Google Ads - MCC (673-311-0705)**. Others offered: PP+K SEM 789-592-9855, Fat Tail Ads 640-744-7337, Pandotic AI 652-857-9941 | Manager link |
+| GA4 | Analytics Account | austin.lance.butler@gmail.com | **Editor** (Administrator was opt-in) |
+| Business Profile | Location | austin.lance.butler@gmail.com | **Manager** (Owner opt-in) |
+| Tag Manager | Container | austin.lance.butler@gmail.com | **User** (Administrator opt-in) |
+| Search Console | Property | austin.lance.butler@gmail.com | **Full** (Owner opt-in) |
+| Merchant Center | Account | austin.lance.butler@gmail.com | **Standard** (Admin opt-in) |
+| LinkedIn | Company Page, Ad Account | LinkedIn user Austin Lance Butler | **Content Admin** page / **Campaign Manager** ad account (Super Admin / Account Manager opt-in) |
+| YouTube | Channel ("your client will invite this Google Account to their YouTube Studio"; YouTube Ads go via Google Ads) | austin.lance.butler@gmail.com | **Editor** (Manager opt-in) |
+| Microsoft | Ads Account | Manager account **Fat Tail Ads, LLC** | Account link |
+
+**White-label**
+- Company name "Fat Tail Ads", slug `fattailads`, default language English (the picker also offered
+  DA/DE/ES/FR/IT/NL/PT), font Inter, FTA bell-curve logo.
+- Progress-bar color **#C8502A**.
+- **Custom CTA on the Connection Complete page: ON.** Button "**Return to Fat Tail Ads**" →
+  `https://fattailads.com`, vermillion button with white text.
+- Connection notification emails went to **austin.lance.butler@gmail.com**.
+
+**Webhooks & API**
+- One webhook → `https://fattailads.com/api/leadsie-webhook?token=…`, data format **v2**. API access
+  was not enabled.
+
+**Tokens**
+- Google (austin.lance.butler@gmail.com): "Missing permissions".
+- Microsoft (Fat Tail Ads, LLC): expires in about a month.
+- Google Ads MCC token: 6 months. Facebook: 2 months. LinkedIn: 8 months.
+
+**The "Connected" screen** (client- and agency-facing, `/connect/connection/<id>`):
+- Progress shows ✓ Connect Meta, ✓ Select Accounts, ✓ Connected.
+- Platform icons, then "Riffle CM successfully connected their Facebook assets".
+- "4 Meta assets successfully connected" expands to a per-asset result list: status, assignment
+  ("Assigned with admin access – Austin Lance Butler"), and per-asset warnings with a "Try To Assign
+  Again" button.
+- "View the Client Summary" link.
+
+**Client summary** (`/client/<id>/<slug>`):
+- Client name with a "Connected" badge, plus the link and Copy.
+- Buttons: **Mark as complete**, **Refresh** (re-check statuses), **Offboard** (remove access).
+- Per-platform table: Account / Status ("Connected – Checked 2 months ago", "Needs confirmation –
+  Unable to check") / Granted to.
+
+**Found during capture: Riffle CM loose ends**
+- Meta Ad Account "RiffleCM Main": the auto-assignment of Austin **failed** ("An error occurred on
+  Facebook's end"). Partner access is Connected, but Austin isn't assigned to the ad account through
+  Leadsie.
+- Meta Dataset RiffleCM.com: "Needs confirmation – Unable to check".
+- Both live in Meta Business Settings, not Leadsie, so they survive the cancellation. Check them in
+  Business Settings → Partners / Ad accounts.
+
+### What FTA Connect must copy from this (adds to §3)
+- Same **default access levels** per platform: GA4 Editor, GBP Manager, GTM User, Search Console
+  Full, Merchant Standard, LinkedIn Content Admin + Campaign Manager, YouTube Editor. Plus the
+  optional "manage users" upgrade per platform.
+- Meta: request **full Dataset access**, and **auto-assign Austin** to the client's assets after the
+  partner grant.
+- Completion page: a "**Return to Fat Tail Ads**" button → fattailads.com, brand color #C8502A.
+- Agency notification email on every new connection (Leadsie sent these to the gmail).
+- An admin client summary with **Refresh / Mark as complete / Offboard** and per-asset "checked X ago".
+
+---
+
+## 6. Next steps (for the gameplan session)
+
+Done: Leadsie cancelled (ends 2026-11-23); `/connect` serves FTA Connect (PR #32, live 2026-11-22);
+the Leadsie integration is documented in §1–§5.
+
+1. **Cleanup (small, any time):**
+   - Mark the stale Teguar and ACE Jiffy (#11) test items Failed in /connect/admin. The Teguar item
+     re-sends to Microsoft every 15 min.
+   - Check the Riffle CM ad-account assignment and dataset in Meta Business Settings.
+   - After 2026-12-23, delete `connect.html`, `api/leadsie-webhook.mjs` and `LEADSIE_WEBHOOK_SECRET`.
+   - Check GA4 / Google Ads for any filter on `connect_completed` source=leadsie.
+2. **Notifications** (ClickUp 86bcd0exk): Resend + SPF/DKIM, a connection-summary email per
+   request. Austin signs up for Resend and approves the DNS records.
+3. **Phase 1 parity build** (ClickUp 86bd5waxp), using §3 and §5 as the spec:
+   - Leadsie-style UI.
+   - Per-client links with no intake form.
+   - Completion page CTA.
+   - Leadsie's default access levels plus the optional manage-users upgrade.
+   - Meta auto-assign.
+   - Auto-verify Meta / Merchant / GBP / LinkedIn.
+   - Admin client summary with Refresh / Mark complete / Offboard.
+4. **Microsoft post-pay link test** (ClickUp 86bcjg73f / 86bcd0er1): Austin creates a post-pay
+   throwaway account.
+5. **Phase 2 one-click OAuth approvals** (ClickUp 86bd5waxq): a widened Google verification video
+   (86bcd0ee1), Meta App Review, LinkedIn CMA.
+6. **Open decision:** keep austin@fattailads.com as the receiving identity for Google/YouTube (current
+   build), or match Leadsie's austin.lance.butler@gmail.com?
